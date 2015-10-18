@@ -12,8 +12,21 @@ University of Illinois at Urbana-Champaign
 #include "msp430g2553.h"
 #include "UART.h"
 
+#define NUMBER_OF_MOTORS 10
+
+#define WIFI_EN 0x01
+#define MODE 0x4
+#define XLAT 0x8
+#define BLANK 0x10
+
 char newprint = 0;
-unsigned long timecnt = 0;  
+unsigned long timecnt = 0;
+
+unsigned int motors[NUMBER_OF_MOTORS] = {0, };
+
+char recchar;
+
+void updateTLC();
 
 void main(void) {
 
@@ -24,19 +37,64 @@ void main(void) {
 	DCOCTL = CALDCO_16MHZ;    // Set uC to run at approximately 16 Mhz
 	BCSCTL1 = CALBC1_16MHZ; 
 
-	// Initialize Port 1
+	//Port 1 GPIO's 
+	//0 1 2 3 4 5 6 7
+	//O / / IGIG/ / /
+	//  RXTX    S S S
+	// S - denotes SPI
+	// RXTX - denotes UART
+	// IG - denotes Input but grounded
+
+	// Initialize Port 1 GPIO's
 	P1SEL &= ~0x01;  // See page 42 and 43 of the G2553's datasheet, It shows that when both P1SEL and P1SEL2 bits are zero   
 	P1SEL2 &= ~0x01; // the corresponding pin is set as a I/O pin.  Datasheet: http://coecsl.ece.illinois.edu/ge423/datasheets/MSP430Ref_Guides/msp430g2553datasheet.pdf  
 	P1REN = 0x0;  // No resistors enabled for Port 1
 	P1DIR |= 0x1; // Set P1.0 to output to drive LED on LaunchPad board.  Make sure shunt jumper is in place at LaunchPad's Red LED
 	P1OUT &= ~0x01;  // Initially set P1.0 to 0
 
+	//seting unused pins to inputs
+	P1SEL &= ~0x01;  
+	P1SEL2 &= ~0x01; 
+	P1DIR &= ~0x18; 
 
+
+	//Port 2 GPIO's 
+	//0 1 2 3 4 5 6 7
+	//O I O O O / IGIG
+	//  R       Timer 1.2
+	// R - denotes pull up resistor
+	// IG - denotes Input but grounded
+
+	//Initialize Port 2 GPIO's
+	//set all of the GPIO's to GPIO's
+	P2SEL &= ~0xDF;
+	P2SEL2 &= ~0xDF;
+	//set PWM Mode
+	P2SEL |= 0x20;
+	P2SEL2 &= ~0x20;
+	P2REN = 0x02;
+	P2DIR = 0x3D;
+	P2OUT |= WIFI_EN;
+	P2OUT &= ~XLAT;
+	P2OUT &= ~BLANK;
+	P2OUT &= ~MODE;
+	
 	// Timer A Config
 	TACCTL0 = CCIE;       		// Enable Periodic interrupt
 	TACCR0 = 16000;                // period = 1ms   
 	TACTL = TASSEL_2 + MC_1; // source SMCLK, up mode
 
+	// Timer A GSCLK Setup
+
+
+	//SPI Config - Might move to new file in future
+	P1SEL |= BIT5 + /*BIT6 +*/ BIT7;//setting pins to SPI mode
+  	P1SEL2 |= BIT5 + /*BIT6 +*/ BIT7;
+	UCB0CTL0 = UCCKPH + UCMSB + UCMST + UCSYNC; // 3-pin, 8-bit SPI master
+	UCB0CTL1 |= UCSSEL_2; // SMCLK
+    UCB0BR0 |= 0x01; // 1:1
+    UCB0BR1 = 0;
+    UCB0CTL1 &= ~UCSWRST; // clear SW
 
 	Init_UART(9600,1);	// Initialize UART for 9600 baud serial communication
 
@@ -61,7 +119,6 @@ void main(void) {
 	}
 }
 
-
 // Timer A0 interrupt service routine
 #pragma vector=TIMER0_A0_VECTOR
 __interrupt void Timer_A (void)
@@ -70,7 +127,11 @@ __interrupt void Timer_A (void)
 
 	if ((timecnt%500) == 0) {
 	newprint = 1;  // flag main while loop that .5 seconds have gone by.  
+	updateTLC();
 	}
+
+	P2OUT |= XLAT;
+	P2OUT &= ~XLAT;
 
 }
 
@@ -155,10 +216,36 @@ __interrupt void USCI0RX_ISR(void) {
 			}
 		}
 */
+		recchar = UCA0RXBUF;// acquire character
+
+		sendchar(recchar);// echo the character
+		UART_printf(" - was recieved\n");
 
 		IFG2 &= ~UCA0RXIFG;
 	}
 
 }
 
+void updateTLC() {
 
+	unsigned char ledCounter = NUMBER_OF_MOTORS >> 1;
+
+	while (ledCounter-- > 0) {
+
+		unsigned char i = ledCounter << 1;
+
+		UCB0TXBUF = motors[i + 1] >> 4;
+		// while (!(IFG2 & UCB0TXIFG))
+			// ; // TX buffer ready?
+		unsigned char unib = motors[i + 1] << 4;
+		unsigned char lnib = (motors[i] >> 8) & 0x0F;
+		UCB0TXBUF = unib | lnib;
+		// while (!(IFG2 & UCB0TXIFG))
+			// ; // TX buffer ready?
+
+		UCB0TXBUF = motors[i];
+		// while (!(IFG2 & UCB0TXIFG))
+			// ; // TX buffer ready?
+		//got rid of the while spins because ISR is more efficient I think
+	}
+}
