@@ -24,7 +24,14 @@ unsigned long timecnt = 0;
 
 unsigned int motors[NUMBER_OF_MOTORS] = {0, };
 
-char recchar;
+char recchar;//variable that holds junk values to read in from the serial line
+char rx_started = 0;//new recieve message flag
+//char rxbuff[255];//buffer to store message
+//char msgindex = 0;//keeping count of message length
+char receive_length;//message's proposed length
+char connection_ID;//connection ID of the module
+char junk_count;//the JUNK values of IPD count before recieving data
+
 
 void updateTLC();
 
@@ -96,10 +103,11 @@ void main(void) {
     UCB0BR1 = 0;
     UCB0CTL1 &= ~UCSWRST; // clear SW
 
-	Init_UART(9600,1);	// Initialize UART for 9600 baud serial communication
+	Init_UART(115200,1);	// Initialize UART for 9600 baud serial communication
 
 	_BIS_SR(GIE); 		// Enable global interrupt
 
+//	UART_printf("AT+CIPMUX=1\r\nAT+CIPSERVER=1\r\n");
 
 	while(1) {
 
@@ -108,10 +116,18 @@ void main(void) {
 		}
 
 		if (newprint)  {
+			if (rxbuff[0] == 1)
+			{
+				P1OUT ^= 0x1;		// Blink LED
+			}
+//			UART_printf("AT+CIPMUX=1\r\nAT+CIPSERVER=1\r\n");
+			//jank work around because printf wasn't working with the longer strings
+			if((timecnt>=2500)&&(timecnt<3000))
+				UART_printf("AT+CIPMUX=1\r\n");//AT+CIPSERVER=1\r\n");
+			if((timecnt>=3000)&&(timecnt<3500))
+				UART_printf("AT+CIPSERVER=1\r\n");
 
-			P1OUT ^= 0x1;		// Blink LED
-
-			UART_printf("Hello %d\n\r",(int)(timecnt/500));
+//			UART_printf("Hello %d\n\r",(int)(timecnt/500));
 
 			newprint = 0;
 		}
@@ -216,10 +232,58 @@ __interrupt void USCI0RX_ISR(void) {
 			}
 		}
 */
-		recchar = UCA0RXBUF;// acquire character
+		// recchar = UCA0RXBUF;// acquire character
 
-		sendchar(recchar);// echo the character
-		UART_printf(" - was recieved\n");
+
+		// sendchar(recchar);// echo the character
+		// UART_printf(" - was recieved\n");
+
+		if(!started) {	// Haven't started a message yet
+			if(UCA0RXBUF == '+') {
+				started = 1;
+				newmsg = 0;
+				junk_count = 0;
+			}
+		}
+		else {	// In process of receiving a message		
+			if (junk_count < 4)//junk IPD,
+			{
+				recchar = UCA0RXBUF;
+				junk_count++;
+			}
+			else if (junk_count == 4)//store the connection ID
+			{
+				connection_ID = UCA0RXBUF;
+				junk_count++;
+			}
+			else if (junk_count == 5)//junk ,
+			{
+				recchar = UCA0RXBUF;
+				junk_count++;
+			}
+			else if (junk_count == 6)//store the length that we should be recieving, need to make sure messages are shorter than 10 characters
+			{
+				receive_length = UCA0RXBUF;
+				junk_count++;
+			}
+			else if (junk_count == 7)//junk :
+			{
+				recchar = UCA0RXBUF;
+				junk_count++;
+			}
+			else if((msgindex < receive_length) && (msgindex < 255)) {
+				rxbuff[msgindex] = UCA0RXBUF;
+
+				msgindex++;
+			} else {	// designated length hit
+				// if(UCA0RXBUF == 255) {	// Message completed
+					newmsg = 1;
+					rxbuff[msgindex] = 255;	// "Null"-terminate the array
+				// }
+				started = 0;
+				msgindex = 0;
+			}
+		}
 
 		IFG2 &= ~UCA0RXIFG;
 	}
