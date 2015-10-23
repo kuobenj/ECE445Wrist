@@ -11,6 +11,7 @@ University of Illinois at Urbana-Champaign
 
 #include "msp430g2553.h"
 #include "UART.h"
+#include <cstdlib>
 
 #define NUMBER_OF_MOTORS 10
 
@@ -31,7 +32,7 @@ char rx_started = 0;//new recieve message flag
 char receive_length;//message's proposed length
 char connection_ID;//connection ID of the module
 char junk_count;//the JUNK values of IPD count before recieving data
-
+char error_flag = 0;
 
 void updateTLC();
 
@@ -116,7 +117,7 @@ void main(void) {
 		}
 
 		if (newprint)  {
-			if (rxbuff[0] == 1)
+			if (rxbuff[0] == '1')
 			{
 				P1OUT ^= 0x1;		// Blink LED
 			}
@@ -239,51 +240,134 @@ __interrupt void USCI0RX_ISR(void) {
 		// UART_printf(" - was recieved\n");
 
 		if(!started) {	// Haven't started a message yet
-			if(UCA0RXBUF == '+') {
+			if(UCA0RXBUF == '+') {//incoming message starts with a +
 				started = 1;
 				newmsg = 0;
-				junk_count = 0;
+				junk_count = 1;
 			}
 		}
 		else {	// In process of receiving a message		
-			if (junk_count < 4)//junk IPD,
-			{
-				recchar = UCA0RXBUF;
-				junk_count++;
-			}
-			else if (junk_count == 4)//store the connection ID
-			{
-				connection_ID = UCA0RXBUF;
-				junk_count++;
-			}
-			else if (junk_count == 5)//junk ,
-			{
-				recchar = UCA0RXBUF;
-				junk_count++;
-			}
-			else if (junk_count == 6)//store the length that we should be recieving, need to make sure messages are shorter than 10 characters
-			{
-				receive_length = UCA0RXBUF;
-				junk_count++;
-			}
-			else if (junk_count == 7)//junk :
-			{
-				recchar = UCA0RXBUF;
-				junk_count++;
-			}
-			else if((msgindex < receive_length) && (msgindex < 255)) {
-				rxbuff[msgindex] = UCA0RXBUF;
+			// if (junk_count < 4)//junk IPD,
+			// {
+			// 	recchar = UCA0RXBUF;
+			// 	junk_count++;
+			// 	if ((recchar != 'I')||(recchar != 'P')||(recchar != 'D')||(recchar != ','))//this should ensure the setup responses don't trigger false alarms
+			// 	{
+			// 		started = 0;
+			// 		newmsg = 0;
+			// 		msgindex = 0;
+			// 	}
+			// }
+			// else if (junk_count == 4)//store the connection ID
+			// {
+			// 	recchar = UCA0RXBUF;
+			// 	connection_ID = atoi(&recchar);
+			// 	junk_count++;
+			// }
+			// else if (junk_count == 5)//junk ,
+			// {
+			// 	recchar = UCA0RXBUF;
+			// 	junk_count++;
+			// }
+			// else if (junk_count == 6)//store the length that we should be recieving, need to make sure messages are shorter than 10 characters
+			// {
+			// 	recchar = UCA0RXBUF;
+			// 	receive_length = atoi(&recchar);
+			// 	junk_count++;
+			// }
+			// else if (junk_count == 7)//junk :
+			// {
+			// 	recchar = UCA0RXBUF;
+			// 	junk_count++;
+			// }
+			// else if((msgindex < receive_length) && (msgindex < 255)) {
+			// 	rxbuff[msgindex] = UCA0RXBUF;
 
-				msgindex++;
-			} else {	// designated length hit
-				// if(UCA0RXBUF == 255) {	// Message completed
+			// 	msgindex++;
+			// }
+			// else {	// designated length hit
+			// 	// if(UCA0RXBUF == 255) {	// Message completed
+			// 		newmsg = 1;
+			// 		rxbuff[msgindex] = 255;	// "Null"-terminate the array
+			// 	// }
+			// 	started = 0;
+			// 	msgindex = 0;
+			// }
+			//IMPORTANT: this is not tolerant to 2+ digits
+			error_flag = 0;//changes to 1 if incoming data isn't as expected
+			switch(junk_count)
+			{
+				case 1://I
+					recchar = UCA0RXBUF;
+					if (recchar != 'I')
+						error_flag = 1;
+					junk_count++;
+				break;
+				case 2://P
+					recchar = UCA0RXBUF;
+					if (recchar != 'P')
+						error_flag = 1;
+					junk_count++;
+				break;
+				case 3://D
+					recchar = UCA0RXBUF;
+					if (recchar != 'D')
+						error_flag = 1;
+					junk_count++;
+				break;
+				case 4://,
+					recchar = UCA0RXBUF;
+					if (recchar != ',')
+						error_flag = 1;
+					junk_count++;
+				break;
+				case 5://[connection_ID]
+					recchar = UCA0RXBUF;
+					connection_ID = atoi(&recchar);
+					junk_count++;
+				break;
+				case 6://,
+					recchar = UCA0RXBUF;
+					if (recchar != ',')
+						error_flag = 1;
+					junk_count++;
+				break;
+				case 7:
+					recchar = UCA0RXBUF;
+					receive_length = atoi(&recchar);
+					junk_count++;
+				break;
+				case 8://:
+					recchar = UCA0RXBUF;
+					if (recchar != ':')
+						error_flag = 1;
+					junk_count++;
+				default://actually get message here
+					recchar = UCA0RXBUF;
+					if((msgindex < receive_length) && (msgindex < 255)&&(recchar != '\n')&&(recchar != '\r')) {
+						if (recchar == '1')
+						{
+							P1OUT ^= 0x1;
+						}
+						rxbuff[msgindex] = recchar;
+						msgindex++;
+					}
+					else {	// designated length hit
 					newmsg = 1;
-					rxbuff[msgindex] = 255;	// "Null"-terminate the array
-				// }
+					rxbuff[msgindex] = '\0';	// "Null"-terminate the array
+					started = 0;
+					msgindex = 0;
+					}
+			}
+
+			if (error_flag == 1)
+			{
 				started = 0;
+				newmsg = 0;
 				msgindex = 0;
 			}
-		}
+
+		 }
 
 		IFG2 &= ~UCA0RXIFG;
 	}
