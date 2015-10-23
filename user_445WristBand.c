@@ -13,7 +13,7 @@ University of Illinois at Urbana-Champaign
 #include "UART.h"
 #include <cstdlib>
 
-#define NUMBER_OF_MOTORS 10
+#define NUMBER_OF_MOTORS 16
 
 #define WIFI_EN 0x01
 #define MODE 0x4
@@ -100,7 +100,8 @@ void main(void) {
   	P1SEL2 |= BIT5 + /*BIT6 +*/ BIT7;
 	UCB0CTL0 = UCCKPH + UCMSB + UCMST + UCSYNC; // 3-pin, 8-bit SPI master
 	UCB0CTL1 |= UCSSEL_2; // SMCLK
-    UCB0BR0 |= 0x01; // 1:1
+    // UCB0BR0 |= 0x01; // 1:1
+    UCB0BR0 = 80;
     UCB0BR1 = 0;
     UCB0CTL1 &= ~UCSWRST; // clear SW
 
@@ -127,9 +128,13 @@ void main(void) {
 				UART_printf("AT+CIPMUX=1\r\n");//AT+CIPSERVER=1\r\n");
 			if((timecnt>=3000)&&(timecnt<3500))
 				UART_printf("AT+CIPSERVER=1\r\n");
-
+			updateTLC();
 //			UART_printf("Hello %d\n\r",(int)(timecnt/500));
-
+			int i;
+			for (i = 0; i < NUMBER_OF_MOTORS; i++)
+			{
+				motors[i] = timecnt;
+			}
 			newprint = 0;
 		}
 
@@ -144,7 +149,6 @@ __interrupt void Timer_A (void)
 
 	if ((timecnt%500) == 0) {
 	newprint = 1;  // flag main while loop that .5 seconds have gone by.  
-	updateTLC();
 	}
 
 	P2OUT |= XLAT;
@@ -345,10 +349,10 @@ __interrupt void USCI0RX_ISR(void) {
 				default://actually get message here
 					recchar = UCA0RXBUF;
 					if((msgindex < receive_length) && (msgindex < 255)&&(recchar != '\n')&&(recchar != '\r')) {
-						if (recchar == '1')
-						{
-							P1OUT ^= 0x1;
-						}
+						// if (recchar == '1')
+						// {
+						// 	P1OUT ^= 0x1;
+						// }
 						rxbuff[msgindex] = recchar;
 						msgindex++;
 					}
@@ -383,17 +387,17 @@ void updateTLC() {
 		unsigned char i = ledCounter << 1;
 
 		UCB0TXBUF = motors[i + 1] >> 4;
-		// while (!(IFG2 & UCB0TXIFG))
-			// ; // TX buffer ready?
+		while (!(IFG2 & UCB0TXIFG))
+			; // TX buffer ready?
 		unsigned char unib = motors[i + 1] << 4;
 		unsigned char lnib = (motors[i] >> 8) & 0x0F;
 		UCB0TXBUF = unib | lnib;
-		// while (!(IFG2 & UCB0TXIFG))
-			// ; // TX buffer ready?
+		while (!(IFG2 & UCB0TXIFG))
+			; // TX buffer ready?
 
 		UCB0TXBUF = motors[i];
-		// while (!(IFG2 & UCB0TXIFG))
-			// ; // TX buffer ready?
+		while (!(IFG2 & UCB0TXIFG))
+			; // TX buffer ready?
 		//got rid of the while spins because ISR is more efficient I think
 	}
 }
