@@ -14,6 +14,7 @@ University of Illinois at Urbana-Champaign
 #include <cstdlib>
 
 #define NUMBER_OF_MOTORS 16
+#define SPI_BUFF_SIZE 24
 
 #define WIFI_EN 0x01
 #define MODE 0x4
@@ -25,7 +26,11 @@ unsigned long timecnt = 0;
 
 unsigned int motors[NUMBER_OF_MOTORS] = {0, };
 
-char recchar;//variable that holds junk values to read in from the serial line
+unsigned char spi_index = 0;
+unsigned char spi_sout_buff[SPI_BUFF_SIZE];
+
+char recchar;//variable that holds values to read in from the UART line
+char recchar2;//variable that holds values to read in from the SPI line
 char rx_started = 0;//new recieve message flag
 //char rxbuff[255];//buffer to store message
 //char msgindex = 0;//keeping count of message length
@@ -34,7 +39,8 @@ char connection_ID;//connection ID of the module
 char junk_count;//the JUNK values of IPD count before recieving data
 char error_flag = 0;
 
-void updateTLC();
+void updateTLC_array();
+void sendTLC_array();
 
 void main(void) {
 
@@ -128,7 +134,12 @@ void main(void) {
 				UART_printf("AT+CIPMUX=1\r\n");//AT+CIPSERVER=1\r\n");
 			if((timecnt>=3000)&&(timecnt<3500))
 				UART_printf("AT+CIPSERVER=1\r\n");
-			updateTLC();
+			if(timecnt>=4000)
+			{
+				updateTLC_array();
+				sendTLC_array();
+			}
+
 //			UART_printf("Hello %d\n\r",(int)(timecnt/500));
 			int i;
 			for (i = 0; i < NUMBER_OF_MOTORS; i++)
@@ -197,7 +208,17 @@ __interrupt void USCI0TX_ISR(void) {
 	}
 
 	if(IFG2&UCB0TXIFG) {	// USCI_B0 requested TX interrupt (UCB0TXBUF is empty)
-
+		if (spi_index >= SPI_BUFF_SIZE)
+		{
+			P2OUT |= XLAT;
+			P2OUT &= ~XLAT;
+			spi_index = 0;
+		}
+		else
+		{		
+			UCB0TXBUF = spi_sout_buff[spi_index];
+			spi_index++;
+		}
 		IFG2 &= ~UCB0TXIFG;   // clear IFG
 	}
 }
@@ -209,7 +230,7 @@ __interrupt void USCI0TX_ISR(void) {
 __interrupt void USCI0RX_ISR(void) {
 
 	if(IFG2&UCB0RXIFG) {  // USCI_B0 requested RX interrupt (UCB0RXBUF is full)
-
+		recchar2 = UCB0RXBUF;
 		IFG2 &= ~UCB0RXIFG;   // clear IFG
 	}
 
@@ -378,7 +399,7 @@ __interrupt void USCI0RX_ISR(void) {
 
 }
 
-void updateTLC() {
+void updateTLC_array() {
 
 	unsigned char ledCounter = NUMBER_OF_MOTORS >> 1;
 
@@ -386,18 +407,28 @@ void updateTLC() {
 
 		unsigned char i = ledCounter << 1;
 
-		UCB0TXBUF = motors[i + 1] >> 4;
-		while (!(IFG2 & UCB0TXIFG))
-			; // TX buffer ready?
+		// UCB0TXBUF = motors[i + 1] >> 4;
+		// while (!(IFG2 & UCB0TXIFG))
+		// 	; // TX buffer ready?
+		// unsigned char unib = motors[i + 1] << 4;
+		// unsigned char lnib = (motors[i] >> 8) & 0x0F;
+		// UCB0TXBUF = unib | lnib;
+		// while (!(IFG2 & UCB0TXIFG))
+		// 	; // TX buffer ready?
+
+		// UCB0TXBUF = motors[i];
+		// while (!(IFG2 & UCB0TXIFG))
+		// 	; // TX buffer ready?
+		//got rid of the while spins because ISR is more efficient I think
+		spi_sout_buff[ledCounter] = motors[i + 1] >> 4;
 		unsigned char unib = motors[i + 1] << 4;
 		unsigned char lnib = (motors[i] >> 8) & 0x0F;
-		UCB0TXBUF = unib | lnib;
-		while (!(IFG2 & UCB0TXIFG))
-			; // TX buffer ready?
-
-		UCB0TXBUF = motors[i];
-		while (!(IFG2 & UCB0TXIFG))
-			; // TX buffer ready?
-		//got rid of the while spins because ISR is more efficient I think
+		spi_sout_buff[ledCounter-1] = unib | lnib;
+		spi_sout_buff[ledCounter-2] = motors[i];
+		ledCounter-=3;
 	}
+}
+
+void sendTLC_array() {
+	UCB0TXBUF = spi_sout_buff[0];
 }
