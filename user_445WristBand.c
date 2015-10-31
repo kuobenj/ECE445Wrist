@@ -24,10 +24,12 @@ University of Illinois at Urbana-Champaign
 char newprint = 0;
 unsigned long timecnt = 0;
 
-unsigned int motors[NUMBER_OF_MOTORS] = {0, };
+unsigned int motors[NUMBER_OF_MOTORS];
 
-unsigned char spi_index = 0;
-unsigned char spi_sout_buff[SPI_BUFF_SIZE];
+volatile unsigned int debug_count = 0;
+
+volatile signed char spi_index = 0;
+volatile unsigned char spi_sout_buff[SPI_BUFF_SIZE];
 
 char recchar;//variable that holds values to read in from the UART line
 char recchar2;//variable that holds values to read in from the SPI line
@@ -37,7 +39,7 @@ char rx_started = 0;//new recieve message flag
 char receive_length;//message's proposed length
 char connection_ID;//connection ID of the module
 char junk_count;//the JUNK values of IPD count before recieving data
-char error_flag = 0;
+volatile char error_flag = 0;
 
 void updateTLC_array();
 void sendTLC_array();
@@ -90,7 +92,8 @@ void main(void) {
 	P2DIR = 0x3D;
 	P2OUT |= WIFI_EN;
 	P2OUT &= ~XLAT;
-	P2OUT &= ~BLANK;
+	// P2OUT &= ~BLANK;
+	P2OUT |= BLANK;
 	P2OUT &= ~MODE;
 	
 	// Timer A Config
@@ -100,12 +103,18 @@ void main(void) {
 
 	// Timer A GSCLK Setup
 	// Hobby Servo Set Up, Should Change Later
-	TA1CCR0 = 40000;                             // PWM Period
+//	TA1CCR0 = 40000;                             // PWM Period
+//	TA1CCTL1 = OUTMOD_7;                         // TA1CCR1 reset/set
+//	TA1CCTL2 = OUTMOD_7;                         // TA1CCR2 reset/set
+//	TA1CCR1 = 3400;                   // TA1CCR1 PWM duty cycle about 50% initially of max pulse width
+//	TA1CCR2 = 3400;                   // TA1CCR2 PWM duty cycle about 50% initially of max pulse width
+//	TA1CTL = TASSEL_2 + ID_3 + MC_1;                  // SMCLK, up mode, ID - sclock divider for 8
+	TA1CCR0 = 2;                             // PWM Period
 	TA1CCTL1 = OUTMOD_7;                         // TA1CCR1 reset/set
 	TA1CCTL2 = OUTMOD_7;                         // TA1CCR2 reset/set
-	TA1CCR1 = 3400;                   // TA1CCR1 PWM duty cycle about 50% initially of max pulse width
-	TA1CCR2 = 3400;                   // TA1CCR2 PWM duty cycle about 50% initially of max pulse width
-	TA1CTL = TASSEL_2 + ID_3 + MC_1;                  // SMCLK, up mode, ID - sclock divider for 8
+	TA1CCR1 = 1;                   // TA1CCR1 PWM duty cycle about 50% initially of max pulse width
+	TA1CCR2 = 1;                   // TA1CCR2 PWM duty cycle about 50% initially of max pulse width
+	TA1CTL = TASSEL_2 + /*ID_3*/ + MC_1;                  // SMCLK, up mode, ID - sclock divider for 8
 
 
 	//SPI Config - Might move to new file in future
@@ -113,8 +122,8 @@ void main(void) {
   	P1SEL2 |= BIT5 + /*BIT6 +*/ BIT7;
 	UCB0CTL0 = UCCKPH + UCMSB + UCMST + UCSYNC; // 3-pin, 8-bit SPI master
 	UCB0CTL1 |= UCSSEL_2; // SMCLK
-    // UCB0BR0 |= 0x01; // 1:1
-    UCB0BR0 = 80;//may want to adjust
+     UCB0BR0 |= 0x01; // 1:1
+//    UCB0BR0 = 80;//may want to adjust
     UCB0BR1 = 0;
     UCB0CTL1 &= ~UCSWRST; // clear SW
 
@@ -127,11 +136,12 @@ void main(void) {
 	int i;
 	for (i = 0; i < NUMBER_OF_MOTORS; i++)
 	{
-		motors[i/2] = 4095;
+		motors[i] = 20;
 	}
 	for (i = 0; i < NUMBER_OF_MOTORS; i++)
 	{
-		motors[(i/2)+1] = 4095;
+		if(i % 2)
+		motors[i] = 4095;
 	}
 
 	while(1) {
@@ -179,8 +189,8 @@ __interrupt void Timer_A (void)
 	newprint = 1;  // flag main while loop that .5 seconds have gone by.  
 	}
 
-	P2OUT |= XLAT;
-	P2OUT &= ~XLAT;
+	P2OUT |= (XLAT+BLANK);
+	P2OUT &= ~(XLAT+BLANK);
 
 }
 
@@ -225,12 +235,13 @@ __interrupt void USCI0TX_ISR(void) {
 	}
 
 	if(IFG2&UCB0TXIFG) {	// USCI_B0 requested TX interrupt (UCB0TXBUF is empty)
+		debug_count++;
 		if (spi_index < 0)
 		{
-			P2OUT |= XLAT;
-			P2OUT &= ~XLAT;
-			P2OUT |= XLAT;
-			P2OUT &= ~XLAT;
+			P2OUT |= (XLAT+BLANK);
+			P2OUT &= ~(XLAT+BLANK);
+//			P2OUT |= BLANK;
+//			P2OUT &= ~BLANK;
 			spi_index = NUMBER_OF_MOTORS - 2;
 		}
 		else
