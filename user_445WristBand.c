@@ -23,6 +23,7 @@ University of Illinois at Urbana-Champaign
 
 char newprint = 0;
 unsigned long timecnt = 0;
+unsigned long pwm_timecnt = 0;
 
 unsigned int motors[NUMBER_OF_MOTORS];
 
@@ -88,6 +89,9 @@ void main(void) {
 	//set PWM Mode
 	P2SEL |= 0x20;
 	P2SEL2 &= ~0x20;
+	//setting the Bit Bang instead
+//	P2SEL &= ~0x20;
+//	P2SEL &= ~0x20;
 	P2REN = 0x02;
 	P2DIR = 0x3D;
 	P2OUT |= WIFI_EN;
@@ -109,12 +113,14 @@ void main(void) {
 //	TA1CCR1 = 3400;                   // TA1CCR1 PWM duty cycle about 50% initially of max pulse width
 //	TA1CCR2 = 3400;                   // TA1CCR2 PWM duty cycle about 50% initially of max pulse width
 //	TA1CTL = TASSEL_2 + ID_3 + MC_1;                  // SMCLK, up mode, ID - sclock divider for 8
+//	TA1CCTL0 = CCIE;       		// Enable Periodic interrupt
 	TA1CCR0 = 2;                             // PWM Period
 	TA1CCTL1 = OUTMOD_7;                         // TA1CCR1 reset/set
-	TA1CCTL2 = OUTMOD_7;                         // TA1CCR2 reset/set
+	TA1CCTL2 = OUTMOD_7+CCIE;                         // TA1CCR2 reset/set
 	TA1CCR1 = 1;                   // TA1CCR1 PWM duty cycle about 50% initially of max pulse width
-	TA1CCR2 = 1;                   // TA1CCR2 PWM duty cycle about 50% initially of max pulse width
+	TA1CCR2 = 2;                   // TA1CCR2 PWM duty cycle about 50% initially of max pulse width
 	TA1CTL = TASSEL_2 + /*ID_3*/ + MC_1;                  // SMCLK, up mode, ID - sclock divider for 8
+	//seems to be around 190ns period
 
 
 	//SPI Config - Might move to new file in future
@@ -126,6 +132,10 @@ void main(void) {
 //    UCB0BR0 = 80;//may want to adjust
     UCB0BR1 = 0;
     UCB0CTL1 &= ~UCSWRST; // clear SW
+    IFG2 &= ~UCB0RXIE;
+    IFG2 &= ~UCB0TXIE;
+  	IE2 |= UCB0RXIE;                          // Enable USCI0 RX interrupt
+  	IE2 |= UCB0TXIE;                          // Enable USCI0 RX interrupt
 
 	Init_UART(115200,1);	// Initialize UART for 9600 baud serial communication
 
@@ -161,11 +171,16 @@ void main(void) {
 				 UART_printf("AT+CIPMUX=1\r\n");//AT+CIPSERVER=1\r\n");
 			if((timecnt>=3000)&&(timecnt<3500))
 				 UART_printf("AT+CIPSERVER=1\r\n");
-			if(timecnt>=4000)
+			if((timecnt > 4000) && ((timecnt%500) == 0))
 			{
 				updateTLC_array();
-				sendTLC_array();
 			}
+//			P2OUT ^= 0x20;
+//
+//			if ((timecnt%(4096*2)) == 0) {
+//				P2OUT |= BLANK;
+//				P2OUT &= ~BLANK;
+//			}
 
 //			UART_printf("Hello %d\n\r",(int)(timecnt/500));
 //			int i;
@@ -189,9 +204,26 @@ __interrupt void Timer_A (void)
 	newprint = 1;  // flag main while loop that .5 seconds have gone by.  
 	}
 
-	P2OUT |= (XLAT+BLANK);
-	P2OUT &= ~(XLAT+BLANK);
+	if((timecnt%10) == 0)
+	{
+		debug_count++;
+		sendTLC_array();
+	}
+}
 
+// Timer A0 interrupt service routine
+#pragma vector=TIMER1_A1_VECTOR
+__interrupt void Timer_1 (void)
+{
+	pwm_timecnt++; // Keep track of time for main while loop.
+
+	if ((pwm_timecnt%(4096*2)) == 0) {
+//	newprint = 1;  // flag main while loop that .5 seconds have gone by.
+//		P2OUT |= (XLAT+BLANK);
+//		P2OUT &= ~(XLAT+BLANK);
+		P2OUT |= BLANK;
+		P2OUT &= ~BLANK;
+	}
 }
 
 
@@ -235,13 +267,15 @@ __interrupt void USCI0TX_ISR(void) {
 	}
 
 	if(IFG2&UCB0TXIFG) {	// USCI_B0 requested TX interrupt (UCB0TXBUF is empty)
-		debug_count++;
 		if (spi_index < 0)
 		{
-			P2OUT |= (XLAT+BLANK);
-			P2OUT &= ~(XLAT+BLANK);
+			debug_count++;
+//			P2OUT |= (XLAT+BLANK);
+//			P2OUT &= ~(XLAT+BLANK);
 //			P2OUT |= BLANK;
 //			P2OUT &= ~BLANK;
+			P2OUT |= XLAT;
+			P2OUT &= ~XLAT;
 			spi_index = NUMBER_OF_MOTORS - 2;
 		}
 		else
