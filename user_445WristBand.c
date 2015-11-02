@@ -101,9 +101,9 @@ void main(void) {
 	P2OUT &= ~MODE;
 	
 	// Timer A Config
-	TACCTL0 = CCIE;       		// Enable Periodic interrupt
-	TACCR0 = 16000;                // period = 1ms   
-	TACTL = TASSEL_2 + MC_1; // source SMCLK, up mode
+	TA0CCTL0 = CCIE;       		// Enable Periodic interrupt
+	TA0CCR0 = 16000;                // period = 1ms
+	TA0CTL = TASSEL_2 + MC_1; // source SMCLK, up mode
 
 	// Timer A GSCLK Setup
 	// Hobby Servo Set Up, Should Change Later
@@ -114,11 +114,11 @@ void main(void) {
 //	TA1CCR2 = 3400;                   // TA1CCR2 PWM duty cycle about 50% initially of max pulse width
 //	TA1CTL = TASSEL_2 + ID_3 + MC_1;                  // SMCLK, up mode, ID - sclock divider for 8
 //	TA1CCTL0 = CCIE;       		// Enable Periodic interrupt
-	TA1CCR0 = 2;                             // PWM Period
+	TA1CCR0 = 40;                             // PWM Period
 	TA1CCTL1 = OUTMOD_7;                         // TA1CCR1 reset/set
 	TA1CCTL2 = OUTMOD_7+CCIE;                         // TA1CCR2 reset/set
 	TA1CCR1 = 1;                   // TA1CCR1 PWM duty cycle about 50% initially of max pulse width
-	TA1CCR2 = 2;                   // TA1CCR2 PWM duty cycle about 50% initially of max pulse width
+	TA1CCR2 = 20;                   // TA1CCR2 PWM duty cycle about 50% initially of max pulse width
 	TA1CTL = TASSEL_2 + /*ID_3*/ + MC_1;                  // SMCLK, up mode, ID - sclock divider for 8
 	//seems to be around 190ns period
 
@@ -128,8 +128,8 @@ void main(void) {
   	P1SEL2 |= BIT5 + /*BIT6 +*/ BIT7;
 	UCB0CTL0 = UCCKPH + UCMSB + UCMST + UCSYNC; // 3-pin, 8-bit SPI master
 	UCB0CTL1 |= UCSSEL_2; // SMCLK
-     UCB0BR0 |= 0x01; // 1:1
-//    UCB0BR0 = 80;//may want to adjust
+//     UCB0BR0 |= 0x01; // 1:1
+    UCB0BR0 = 80;//may want to adjust
     UCB0BR1 = 0;
     UCB0CTL1 &= ~UCSWRST; // clear SW
     IFG2 &= ~UCB0RXIE;
@@ -146,13 +146,13 @@ void main(void) {
 	int i;
 	for (i = 0; i < NUMBER_OF_MOTORS; i++)
 	{
-		motors[i] = 20;
-	}
-	for (i = 0; i < NUMBER_OF_MOTORS; i++)
-	{
-		if(i % 2)
 		motors[i] = 4095;
 	}
+//	for (i = 0; i < NUMBER_OF_MOTORS; i++)
+//	{
+//		if(i % 2)
+//		motors[i] = 4095;
+//	}
 
 	while(1) {
 
@@ -175,6 +175,7 @@ void main(void) {
 			{
 				updateTLC_array();
 			}
+//			debug_count++;
 //			P2OUT ^= 0x20;
 //
 //			if ((timecnt%(4096*2)) == 0) {
@@ -204,7 +205,7 @@ __interrupt void Timer_A (void)
 	newprint = 1;  // flag main while loop that .5 seconds have gone by.  
 	}
 
-	if((timecnt%10) == 0)
+	if((timecnt%500) == 0)
 	{
 		debug_count++;
 		sendTLC_array();
@@ -224,6 +225,8 @@ __interrupt void Timer_1 (void)
 		P2OUT |= BLANK;
 		P2OUT &= ~BLANK;
 	}
+
+	TA1IV &= ~TA1IV_TACCR2;
 }
 
 
@@ -276,7 +279,7 @@ __interrupt void USCI0TX_ISR(void) {
 //			P2OUT &= ~BLANK;
 			P2OUT |= XLAT;
 			P2OUT &= ~XLAT;
-			spi_index = NUMBER_OF_MOTORS - 2;
+			spi_index = NUMBER_OF_MOTORS - 1;
 		}
 		else
 		{		
@@ -451,5 +454,5 @@ void updateTLC_array() {
 }
 
 void sendTLC_array() {
-	UCB0TXBUF = spi_sout_buff[SPI_BUFF_SIZE-1];
+	UCB0TXBUF = spi_sout_buff[spi_index];
 }
