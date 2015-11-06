@@ -22,15 +22,15 @@ University of Illinois at Urbana-Champaign
 #define BLANK 0x10
 
 char newprint = 0;
-unsigned long timecnt = 0;
-unsigned long pwm_timecnt = 0;
+unsigned long timecnt = 0;//keeps track of milliseconds
+unsigned long pwm_timecnt = 0;//keeps track of each cylce of PWM
 
-unsigned int motors[NUMBER_OF_MOTORS];
+unsigned int motors[NUMBER_OF_MOTORS];//array of motor intensities. varies from 0-4095
 
-volatile unsigned int debug_count = 0;
+volatile unsigned int debug_count = 0;//debug uses to keep track of how many times something executes
 
-volatile signed char spi_index = 0;
-volatile unsigned char spi_sout_buff[SPI_BUFF_SIZE];
+volatile signed char spi_index = SPI_BUFF_SIZE-1;//index into spi_sout_buff, keeps track of how much we've sent
+volatile unsigned char spi_sout_buff[SPI_BUFF_SIZE];//holds the SPI outs
 
 char recchar;//variable that holds values to read in from the UART line
 char recchar2;//variable that holds values to read in from the SPI line
@@ -137,11 +137,13 @@ void main(void) {
   	IE2 |= UCB0RXIE;                          // Enable USCI0 RX interrupt
   	IE2 |= UCB0TXIE;                          // Enable USCI0 RX interrupt
 
+  	//set pin 6 to input
+  	P1SEL &= ~BIT6;
+  	P1SEL2 &= ~BIT6;
+
 	Init_UART(115200,1);	// Initialize UART for 9600 baud serial communication
 
 	_BIS_SR(GIE); 		// Enable global ianterrupt
-
-//	UART_printf("AT+CIPMUX=1\r\nAT+CIPSERVER=1\r\n");
 
 	int i;
 	for (i = 0; i < NUMBER_OF_MOTORS; i++)
@@ -154,6 +156,7 @@ void main(void) {
 //		motors[i] = 4095;
 //	}
 
+	/**********************MAIN LOOP*******************************/
 	while(1) {
 
 		if(newmsg) {
@@ -216,10 +219,9 @@ __interrupt void Timer_A (void)
 #pragma vector=TIMER1_A1_VECTOR
 __interrupt void Timer_1 (void)
 {
-	pwm_timecnt++; // Keep track of time for main while loop.
+	pwm_timecnt++; // Keep track of PWM counts
 
 	if ((pwm_timecnt%(4096*2)) == 0) {
-//	newprint = 1;  // flag main while loop that .5 seconds have gone by.
 //		P2OUT |= (XLAT+BLANK);
 //		P2OUT &= ~(XLAT+BLANK);
 		P2OUT |= BLANK;
@@ -279,7 +281,7 @@ __interrupt void USCI0TX_ISR(void) {
 //			P2OUT &= ~BLANK;
 			P2OUT |= XLAT;
 			P2OUT &= ~XLAT;
-			spi_index = NUMBER_OF_MOTORS - 1;
+			spi_index = SPI_BUFF_SIZE - 1;
 		}
 		else
 		{		
@@ -302,37 +304,12 @@ __interrupt void USCI0RX_ISR(void) {
 	}
 
 	if(IFG2&UCA0RXIFG) {  // USCI_A0 requested RX interrupt (UCA0RXBUF is full)
-
-//    Uncomment this block of code if you would like to use this COM protocol that uses 253 as STARTCHAR and 255 as STOPCHAR
-/*		if(!started) {	// Haven't started a message yet
-			if(UCA0RXBUF == 253) {
-				started = 1;
-				newmsg = 0;
-			}
-		}
-		else {	// In process of receiving a message		
-			if((UCA0RXBUF != 255) && (msgindex < (MAX_NUM_FLOATS*5))) {
-				rxbuff[msgindex] = UCA0RXBUF;
-
-				msgindex++;
-			} else {	// Stop char received or too much data received
-				if(UCA0RXBUF == 255) {	// Message completed
-					newmsg = 1;
-					rxbuff[msgindex] = 255;	// "Null"-terminate the array
-				}
-				started = 0;
-				msgindex = 0;
-			}
-		}
-*/
-		// recchar = UCA0RXBUF;// acquire character
-
-
-		// sendchar(recchar);// echo the character
-		// UART_printf(" - was recieved\n");
+		//interrupts when recieved UART
+		//pareses incoming strings +IPD,X,X:MESSAGE_HERE
+		recchar = UCA0RXBUF;// acquire character
 
 		if(!started) {	// Haven't started a message yet
-			if(UCA0RXBUF == '+') {//incoming message starts with a +
+			if(recchar == '+') {//incoming message starts with a +
 				started = 1;
 				newmsg = 0;
 				junk_count = 1;
