@@ -145,16 +145,33 @@ void main(void) {
 
 	_BIS_SR(GIE); 		// Enable global ianterrupt
 
-	int i;
-	for (i = 0; i < NUMBER_OF_MOTORS; i++)
-	{
-		motors[i] = 4095;
-	}
+//	int i;
+//	for (i = 0; i < NUMBER_OF_MOTORS; i++)
+//	{
+//		motors[i] = 4095;
+//	}
 //	for (i = 0; i < NUMBER_OF_MOTORS; i++)
 //	{
 //		if(i % 2)
 //		motors[i] = 4095;
 //	}
+	motors[0] = (unsigned int) 4095;
+	motors[1] = (unsigned int) 4095* 0.9;
+	motors[2] = (unsigned int) 4095* 0.8;
+	motors[3] = (unsigned int) 4095* 0.7;
+	motors[4] = (unsigned int) 4095* 0.6;
+	motors[5] = (unsigned int) 4095* 0.5;
+	motors[6] = (unsigned int) 4095* 0.4;
+	motors[7] = (unsigned int) 4095* 0.3;
+	motors[8] = (unsigned int) 4095* 0.25;
+	motors[9] = (unsigned int) 4095* 0.2;
+	motors[10] = (unsigned int) 4095* 0.15;
+	motors[11] = (unsigned int) 4095* 0.1;
+	motors[12] = (unsigned int) 4095* 0.05;
+	motors[13] = (unsigned int) 4095* 0.04;
+	motors[14] = (unsigned int) 4095* 0.025;
+	motors[15] = (unsigned int) 4095* 0.01;
+
 
 	/**********************MAIN LOOP*******************************/
 	while(1) {
@@ -174,8 +191,15 @@ void main(void) {
 				 UART_printf("AT+CIPMUX=1\r\n");//AT+CIPSERVER=1\r\n");
 			if((timecnt>=3000)&&(timecnt<3500))
 				 UART_printf("AT+CIPSERVER=1\r\n");
-			if((timecnt > 4000) && ((timecnt%500) == 0))
+			if((timecnt > 4000) && (((timecnt+50)%100) == 0))
 			{
+				int i;
+				int temp = motors[0];
+				for (i = 0; i < (NUMBER_OF_MOTORS-1); i++)
+				{
+					motors[i] = motors[i+1];
+				}
+				motors[NUMBER_OF_MOTORS-1] = temp;
 				updateTLC_array();
 			}
 //			debug_count++;
@@ -208,7 +232,7 @@ __interrupt void Timer_A (void)
 	newprint = 1;  // flag main while loop that .5 seconds have gone by.  
 	}
 
-	if((timecnt%500) == 0)
+	if((timecnt%100) == 0)
 	{
 		debug_count++;
 		sendTLC_array();
@@ -221,7 +245,7 @@ __interrupt void Timer_1 (void)
 {
 	pwm_timecnt++; // Keep track of PWM counts
 
-	if ((pwm_timecnt%(4096*2)) == 0) {
+	if ((pwm_timecnt%(4096)) == 0) {
 //		P2OUT |= (XLAT+BLANK);
 //		P2OUT &= ~(XLAT+BLANK);
 		P2OUT |= BLANK;
