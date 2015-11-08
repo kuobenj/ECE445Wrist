@@ -13,7 +13,8 @@ University of Illinois at Urbana-Champaign
 #include "UART.h"
 #include <cstdlib>
 
-#define NUMBER_OF_MOTORS 16
+#define MAX_NUMBER_OF_MOTORS 16
+#define NUMBER_OF_MOTORS 10
 #define SPI_BUFF_SIZE 24
 
 #define WIFI_EN 0x01
@@ -23,9 +24,9 @@ University of Illinois at Urbana-Champaign
 
 char newprint = 0;
 unsigned long timecnt = 0;//keeps track of milliseconds
-unsigned long pwm_timecnt = 0;//keeps track of each cylce of PWM
+// unsigned long pwm_timecnt = 0;//keeps track of each cylce of PWM
 
-unsigned int motors[NUMBER_OF_MOTORS];//array of motor intensities. varies from 0-4095
+unsigned int motors[MAX_NUMBER_OF_MOTORS];//array of motor intensities. varies from 0-4095
 
 volatile unsigned int debug_count = 0;//debug uses to keep track of how many times something executes
 
@@ -40,12 +41,23 @@ char rx_started = 0;//new recieve message flag
 char receive_length;//message's proposed length
 char connection_ID;//connection ID of the module
 char junk_count;//the JUNK values of IPD count before recieving data
-volatile char error_flag = 0;
+volatile char error_flag = 0;//error in UART transmission
+
+char rx_expression = 0;//this variable is to keep track of the expression recieved
+//0 - neutral
+//1 - happy
+//2 - suprised
+signed char expression_response_count = 0;//this variable will keep track of how long to ellicit the response
+#define EXPRESSION_RESPONSE_DURATION 20
 
 void updateTLC_array();
 void sendTLC_array();
+void happy();
+void suprised();
+void neutral();
 
 void main(void) {
+	/**********************SETUP CODE (RUNS ONCE)*******************************/
 
 	WDTCTL = WDTPW + WDTHOLD;                 // Stop WDT
 
@@ -140,37 +152,42 @@ void main(void) {
   	//set pin 6 to input
   	P1SEL &= ~BIT6;
   	P1SEL2 &= ~BIT6;
+  	//CHANGE MY DIRECTION EVENTUALLY TO VERIFIY THAT IT IS INPUT
 
 	Init_UART(115200,1);	// Initialize UART for 9600 baud serial communication
 
 	_BIS_SR(GIE); 		// Enable global ianterrupt
 
 //	int i;
-//	for (i = 0; i < NUMBER_OF_MOTORS; i++)
+//	for (i = 0; i < MAX_NUMBER_OF_MOTORS; i++)
+//	{
+//		motors[i] = 0;
+//	}
+//	for (i = 0; i < MAX_NUMBER_OF_MOTORS; i++)
 //	{
 //		motors[i] = 4095;
 //	}
-//	for (i = 0; i < NUMBER_OF_MOTORS; i++)
+//	for (i = 0; i < MAX_NUMBER_OF_MOTORS; i++)
 //	{
 //		if(i % 2)
 //		motors[i] = 4095;
 //	}
-	motors[0] = (unsigned int) 4095;
-	motors[1] = (unsigned int) 4095* 0.9;
-	motors[2] = (unsigned int) 4095* 0.8;
-	motors[3] = (unsigned int) 4095* 0.7;
-	motors[4] = (unsigned int) 4095* 0.6;
-	motors[5] = (unsigned int) 4095* 0.5;
-	motors[6] = (unsigned int) 4095* 0.4;
-	motors[7] = (unsigned int) 4095* 0.3;
-	motors[8] = (unsigned int) 4095* 0.25;
-	motors[9] = (unsigned int) 4095* 0.2;
-	motors[10] = (unsigned int) 4095* 0.15;
-	motors[11] = (unsigned int) 4095* 0.1;
-	motors[12] = (unsigned int) 4095* 0.05;
-	motors[13] = (unsigned int) 4095* 0.04;
-	motors[14] = (unsigned int) 4095* 0.025;
-	motors[15] = (unsigned int) 4095* 0.01;
+	// motors[0] = (unsigned int) 4095;
+	// motors[1] = (unsigned int) 4095* 0.9;
+	// motors[2] = (unsigned int) 4095* 0.8;
+	// motors[3] = (unsigned int) 4095* 0.7;
+	// motors[4] = (unsigned int) 4095* 0.6;
+	// motors[5] = (unsigned int) 4095* 0.5;
+	// motors[6] = (unsigned int) 4095* 0.4;
+	// motors[7] = (unsigned int) 4095* 0.3;
+	// motors[8] = (unsigned int) 4095* 0.25;
+	// motors[9] = (unsigned int) 4095* 0.2;
+	// motors[10] = (unsigned int) 4095* 0.15;
+	// motors[11] = (unsigned int) 4095* 0.1;
+	// motors[12] = (unsigned int) 4095* 0.05;
+	// motors[13] = (unsigned int) 4095* 0.04;
+	// motors[14] = (unsigned int) 4095* 0.025;
+	// motors[15] = (unsigned int) 4095* 0.01;
 
 
 	/**********************MAIN LOOP*******************************/
@@ -185,34 +202,44 @@ void main(void) {
 			{
 				P1OUT ^= 0x1;		// Blink LED
 			}
-//			UART_printf("AT+CIPMUX=1\r\nAT+CIPSERVER=1\r\n");
+			// UART_printf("AT+CIPMUX=1\r\nAT+CIPSERVER=1\r\n");
 			//jank work around because printf wasn't working with the longer strings
 			if((timecnt>=2500)&&(timecnt<3000))
-				 UART_printf("AT+CIPMUX=1\r\n");//AT+CIPSERVER=1\r\n");
+				 UART_printf("AT+CIPMUX=1\r\n");
 			if((timecnt>=3000)&&(timecnt<3500))
 				 UART_printf("AT+CIPSERVER=1\r\n");
 			if((timecnt > 4000) && (((timecnt+50)%100) == 0))
 			{
-				int i;
-				int temp = motors[0];
-				for (i = 0; i < (NUMBER_OF_MOTORS-1); i++)
-				{
-					motors[i] = motors[i+1];
+				switch(rx_expression){
+					case 0:
+						neutral();
+						break;
+					case 1:
+						happy();
+						break;
+					case 2:
+						suprised();
+						break;
+					default:
+						neutral();
 				}
-				motors[NUMBER_OF_MOTORS-1] = temp;
+				expression_response_count--;
+				if (expression_response_count < 0)
+				{
+					rx_expression = 0;
+				}
+				// int i;
+				// int temp = motors[0];
+				// for (i = 0; i < (MAX_NUMBER_OF_MOTORS-1); i++)
+				// {
+				// 	motors[i] = motors[i+1];
+				// }
+				// motors[MAX_NUMBER_OF_MOTORS-1] = temp;
 				updateTLC_array();
 			}
-//			debug_count++;
-//			P2OUT ^= 0x20;
-//
-//			if ((timecnt%(4096*2)) == 0) {
-//				P2OUT |= BLANK;
-//				P2OUT &= ~BLANK;
-//			}
-
 //			UART_printf("Hello %d\n\r",(int)(timecnt/500));
 //			int i;
-//			for (i = 0; i < NUMBER_OF_MOTORS; i++)
+//			for (i = 0; i < MAX_NUMBER_OF_MOTORS; i++)
 //			{
 //				motors[i] = timecnt;
 //			}
@@ -222,7 +249,7 @@ void main(void) {
 	}
 }
 
-// Timer A0 interrupt service routine
+// Timer A0 interrupt service routine runs every 0.001 seconds
 #pragma vector=TIMER0_A0_VECTOR
 __interrupt void Timer_A (void)
 {
@@ -239,16 +266,15 @@ __interrupt void Timer_A (void)
 	}
 }
 
-// Timer A0 interrupt service routine
+// Timer A1 interrupt service routine, keeps track of greyscale clock cycles
 #pragma vector=TIMER1_A1_VECTOR
 __interrupt void Timer_1 (void)
 {
+	static unsigned long pwm_timecnt = 0;//keeps track of each cylce of PWM
 	pwm_timecnt++; // Keep track of PWM counts
 
 	if ((pwm_timecnt%(4096)) == 0) {
-//		P2OUT |= (XLAT+BLANK);
-//		P2OUT &= ~(XLAT+BLANK);
-		P2OUT |= BLANK;
+		P2OUT |= BLANK;//blank after clock hits 4096
 		P2OUT &= ~BLANK;
 	}
 
@@ -269,6 +295,7 @@ __interrupt void ADC10_ISR(void) {
 #pragma vector=USCIAB0TX_VECTOR
 __interrupt void USCI0TX_ISR(void) {
 
+	//UART Handler
 	if(IFG2&UCA0TXIFG) {		// USCI_A0 requested TX interrupt
 		if(printf_flag) {
 			if (currentindex == txcount) {
@@ -295,18 +322,17 @@ __interrupt void USCI0TX_ISR(void) {
 		IFG2 &= ~UCA0TXIFG;
 	}
 
+	//SPI Handler
 	if(IFG2&UCB0TXIFG) {	// USCI_B0 requested TX interrupt (UCB0TXBUF is empty)
+		//hit end of SPI buffer and ready for next SPI transmission
 		if (spi_index < 0)
 		{
 			debug_count++;
-//			P2OUT |= (XLAT+BLANK);
-//			P2OUT &= ~(XLAT+BLANK);
-//			P2OUT |= BLANK;
-//			P2OUT &= ~BLANK;
-			P2OUT |= XLAT;
+			P2OUT |= XLAT;//XLAT to latch on to new values
 			P2OUT &= ~XLAT;
 			spi_index = SPI_BUFF_SIZE - 1;
 		}
+		//send next SPI buffer byte
 		else
 		{		
 			UCB0TXBUF = spi_sout_buff[spi_index];
@@ -322,11 +348,13 @@ __interrupt void USCI0TX_ISR(void) {
 #pragma vector=USCIAB0RX_VECTOR
 __interrupt void USCI0RX_ISR(void) {
 
+	//should not trigger, SPI input not enabled
 	if(IFG2&UCB0RXIFG) {  // USCI_B0 requested RX interrupt (UCB0RXBUF is full)
 		recchar2 = UCB0RXBUF;
 		IFG2 &= ~UCB0RXIFG;   // clear IFG
 	}
 
+	//UART recieve handler
 	if(IFG2&UCA0RXIFG) {  // USCI_A0 requested RX interrupt (UCA0RXBUF is full)
 		//interrupts when recieved UART
 		//pareses incoming strings +IPD,X,X:MESSAGE_HERE
@@ -340,7 +368,7 @@ __interrupt void USCI0RX_ISR(void) {
 			}
 		}
 		else {	// In process of receiving a message		
-			//IMPORTANT: this is not tolerant to 2+ digits
+			//IMPORTANT: this is may not tolerant to 2+ digits, I haven't tested this
 			error_flag = 0;//changes to 1 if incoming data isn't as expected
 			switch(junk_count)
 			{
@@ -401,10 +429,24 @@ __interrupt void USCI0RX_ISR(void) {
 					}
 					else {	// designated length hit
 					newmsg = 1;
-					rxbuff[msgindex] = '\0';	// "Null"-terminate the array
+					rxbuff[msgindex] = '\0';	// Null-terminate the array
 					started = 0;
 					msgindex = 0;
 					}
+			}
+			//check if we have a new rx_expression
+			if (newmsg == 1)
+			{
+				if (rxbuff[0] == '1')
+				{
+					rx_expression = 1;
+					expression_response_count = EXPRESSION_RESPONSE_DURATION;
+				}
+				else if (rxbuff[0] == '2')
+				{
+					rx_expression = 2;
+					expression_response_count = EXPRESSION_RESPONSE_DURATION;
+				}
 			}
 
 			if (error_flag == 1)
@@ -421,15 +463,17 @@ __interrupt void USCI0RX_ISR(void) {
 
 }
 
+//Repackages the motor intensities into the SPI buffer
 void updateTLC_array() {
 
-	unsigned char ledCounter = NUMBER_OF_MOTORS >> 1;
+	unsigned char ledCounter = MAX_NUMBER_OF_MOTORS >> 1;
 	unsigned char buff_idx = SPI_BUFF_SIZE-1;
 
 	while (ledCounter-- > 0) {
 
 		unsigned char i = ledCounter << 1;
 
+		//Original Code From: 
 		// UCB0TXBUF = motors[i + 1] >> 4;
 		// while (!(IFG2 & UCB0TXIFG))
 		// 	; // TX buffer ready?
@@ -442,6 +486,7 @@ void updateTLC_array() {
 		// UCB0TXBUF = motors[i];
 		// while (!(IFG2 & UCB0TXIFG))
 		// 	; // TX buffer ready?
+		//
 		//got rid of the while spins because ISR is more efficient I think
 		spi_sout_buff[buff_idx] = motors[i + 1] >> 4;
 		buff_idx--;
@@ -454,6 +499,62 @@ void updateTLC_array() {
 	}
 }
 
+
+//initiates the SPI tranfer to the TLC chip
 void sendTLC_array() {
 	UCB0TXBUF = spi_sout_buff[spi_index];
+}
+
+//happy stimulation pattern
+void happy()
+{
+	int i;
+	int temp = motors[0];
+	if (expression_response_count == EXPRESSION_RESPONSE_DURATION)
+	{
+		motors[0] = (unsigned int) 4095;
+		motors[1] = (unsigned int) 4095* 0.9;
+		motors[2] = (unsigned int) 4095* 0.8;
+		motors[3] = (unsigned int) 4095* 0.7;
+		motors[4] = (unsigned int) 4095* 0.6;
+		motors[5] = (unsigned int) 4095* 0.5;
+		motors[6] = (unsigned int) 4095* 0.4;
+		motors[7] = (unsigned int) 4095* 0.3;
+		motors[8] = (unsigned int) 4095* 0.2;
+		motors[9] = (unsigned int) 4095* 0.1;
+	}
+	for (i = 0; i < (NUMBER_OF_MOTORS-1); i++)
+	{
+		motors[i] = motors[i+1];
+	}
+	motors[NUMBER_OF_MOTORS-1] = temp;
+}
+//suprised stimulation pattern
+void suprised()
+{
+	int i;
+	if ((expression_response_count % 2) == 0)
+	{
+		for (i = 0; i < NUMBER_OF_MOTORS; i++)
+		{
+			motors[i] = 4095;
+		}
+	}
+	else
+	{
+		for (i = 0; i < NUMBER_OF_MOTORS; i++)
+		{
+			motors[i] = 0;
+		}
+	}
+}
+//neutral routine
+void neutral()
+{
+	int i;
+	for (i = 0; i < MAX_NUMBER_OF_MOTORS; i++)
+	{
+		motors[i] = 0;
+	}
+	updateTLC_array();
 }
