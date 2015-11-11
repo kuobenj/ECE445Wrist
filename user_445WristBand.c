@@ -22,6 +22,8 @@ University of Illinois at Urbana-Champaign
 #define XLAT 0x8
 #define BLANK 0x10
 
+#define BUTTON_PIN 0x02
+
 char newprint = 0;
 unsigned long timecnt = 0;//keeps track of milliseconds
 // unsigned long pwm_timecnt = 0;//keeps track of each cylce of PWM
@@ -33,22 +35,22 @@ volatile unsigned int debug_count = 0;//debug uses to keep track of how many tim
 volatile signed char spi_index = SPI_BUFF_SIZE-1;//index into spi_sout_buff, keeps track of how much we've sent
 volatile unsigned char spi_sout_buff[SPI_BUFF_SIZE];//holds the SPI outs
 
-char recchar;//variable that holds values to read in from the UART line
+char recchar[2];//variable that holds values to read in from the UART line
 char recchar2;//variable that holds values to read in from the SPI line
 char rx_started = 0;//new recieve message flag
 //char rxbuff[255];//buffer to store message
-//char msgindex = 0;//keeping count of message length
+// char msgindex = 0;//keeping count of message length
 char receive_length;//message's proposed length
 char connection_ID;//connection ID of the module
 char junk_count;//the JUNK values of IPD count before recieving data
 volatile char error_flag = 0;//error in UART transmission
 
-char rx_expression = 0;//this variable is to keep track of the expression recieved
+char rx_expression = 1;//this variable is to keep track of the expression recieved
 //0 - neutral
 //1 - happy
 //2 - suprised
-signed char expression_response_count = 0;//this variable will keep track of how long to ellicit the response
-#define EXPRESSION_RESPONSE_DURATION 20
+int expression_response_count = 20;//this variable will keep track of how long to ellicit the response
+#define EXPRESSION_RESPONSE_DURATION 75
 
 void updateTLC_array();
 void sendTLC_array();
@@ -111,6 +113,11 @@ void main(void) {
 	// P2OUT &= ~BLANK;
 	P2OUT |= BLANK;
 	P2OUT &= ~MODE;
+
+	//Enabling the Button Interrupt
+	P2IE |= BUTTON_PIN;                             // P1.4 interrupt enabled
+	P2IES |= BUTTON_PIN;                            // P1.4 Hi/lo edge
+	P2IFG &= ~BUTTON_PIN;                           // P1.4 IFG cleared
 	
 	// Timer A Config
 	TA0CCTL0 = CCIE;       		// Enable Periodic interrupt
@@ -172,27 +179,30 @@ void main(void) {
 //		if(i % 2)
 //		motors[i] = 4095;
 //	}
-	// motors[0] = (unsigned int) 4095;
-	// motors[1] = (unsigned int) 4095* 0.9;
-	// motors[2] = (unsigned int) 4095* 0.8;
-	// motors[3] = (unsigned int) 4095* 0.7;
-	// motors[4] = (unsigned int) 4095* 0.6;
-	// motors[5] = (unsigned int) 4095* 0.5;
-	// motors[6] = (unsigned int) 4095* 0.4;
-	// motors[7] = (unsigned int) 4095* 0.3;
-	// motors[8] = (unsigned int) 4095* 0.25;
-	// motors[9] = (unsigned int) 4095* 0.2;
-	// motors[10] = (unsigned int) 4095* 0.15;
-	// motors[11] = (unsigned int) 4095* 0.1;
-	// motors[12] = (unsigned int) 4095* 0.05;
-	// motors[13] = (unsigned int) 4095* 0.04;
-	// motors[14] = (unsigned int) 4095* 0.025;
-	// motors[15] = (unsigned int) 4095* 0.01;
+//	 motors[0] = (unsigned int) 4095;
+//	 motors[1] = (unsigned int) 4095* 0.9;
+//	 motors[2] = (unsigned int) 4095* 0.8;
+//	 motors[3] = (unsigned int) 4095* 0.7;
+//	 motors[4] = (unsigned int) 4095* 0.6;
+//	 motors[5] = (unsigned int) 4095* 0.5;
+//	 motors[6] = (unsigned int) 4095* 0.4;
+//	 motors[7] = (unsigned int) 4095* 0.3;
+//	 motors[8] = (unsigned int) 4095* 0.25;
+//	 motors[9] = (unsigned int) 4095* 0.2;
+//	 motors[10] = (unsigned int) 4095* 0.15;
+//	 motors[11] = (unsigned int) 4095* 0.1;
+//	 motors[12] = (unsigned int) 4095* 0.05;
+//	 motors[13] = (unsigned int) 4095* 0.04;
+//	 motors[14] = (unsigned int) 4095* 0.025;
+//	 motors[15] = (unsigned int) 4095* 0.01;
+
+	//initialized recchar second character to \0
+	recchar[1] = '\0';
 
 
 	/**********************MAIN LOOP*******************************/
 	while(1) {
-
+		static char init_flag = 0;
 		if(newmsg) {
 			newmsg = 0;
 		}
@@ -204,10 +214,18 @@ void main(void) {
 			}
 			// UART_printf("AT+CIPMUX=1\r\nAT+CIPSERVER=1\r\n");
 			//jank work around because printf wasn't working with the longer strings
-			if((timecnt>=2500)&&(timecnt<3000))
+			if((timecnt>=2500)&&(timecnt<3000)){
+				if(init_flag == 0){
 				 UART_printf("AT+CIPMUX=1\r\n");
-			if((timecnt>=3000)&&(timecnt<3500))
+				 init_flag++;
+				}
+			}
+			if((timecnt>=3000)&&(timecnt<3500)){
+				if(init_flag == 1){
 				 UART_printf("AT+CIPSERVER=1\r\n");
+				 init_flag--;
+				}
+			}
 			if((timecnt > 4000) && (((timecnt+50)%100) == 0))
 			{
 				switch(rx_expression){
@@ -228,13 +246,13 @@ void main(void) {
 				{
 					rx_expression = 0;
 				}
-				// int i;
-				// int temp = motors[0];
-				// for (i = 0; i < (MAX_NUMBER_OF_MOTORS-1); i++)
-				// {
-				// 	motors[i] = motors[i+1];
-				// }
-				// motors[MAX_NUMBER_OF_MOTORS-1] = temp;
+//				 int i;
+//				 int temp = motors[0];
+//				 for (i = 0; i < (MAX_NUMBER_OF_MOTORS-1); i++)
+//				 {
+//				 	motors[i] = motors[i+1];
+//				 }
+//				 motors[MAX_NUMBER_OF_MOTORS-1] = temp;
 				updateTLC_array();
 			}
 //			UART_printf("Hello %d\n\r",(int)(timecnt/500));
@@ -257,6 +275,7 @@ __interrupt void Timer_A (void)
 
 	if ((timecnt%500) == 0) {
 	newprint = 1;  // flag main while loop that .5 seconds have gone by.  
+	P2IE |= BUTTON_PIN;
 	}
 
 	if((timecnt%100) == 0)
@@ -358,10 +377,10 @@ __interrupt void USCI0RX_ISR(void) {
 	if(IFG2&UCA0RXIFG) {  // USCI_A0 requested RX interrupt (UCA0RXBUF is full)
 		//interrupts when recieved UART
 		//pareses incoming strings +IPD,X,X:MESSAGE_HERE
-		recchar = UCA0RXBUF;// acquire character
-
+		recchar[0] = UCA0RXBUF;// acquire character
+		sendchar(recchar[0]);
 		if(!started) {	// Haven't started a message yet
-			if(recchar == '+') {//incoming message starts with a +
+			if(recchar[0] == '+') {//incoming message starts with a +
 				started = 1;
 				newmsg = 0;
 				junk_count = 1;
@@ -373,58 +392,59 @@ __interrupt void USCI0RX_ISR(void) {
 			switch(junk_count)
 			{
 				case 1://I
-					recchar = UCA0RXBUF;
-					if (recchar != 'I')
+					recchar[0] = UCA0RXBUF;
+					if (recchar[0] != 'I')
 						error_flag = 1;
 					junk_count++;
 				break;
 				case 2://P
-					recchar = UCA0RXBUF;
-					if (recchar != 'P')
+					recchar[0] = UCA0RXBUF;
+					if (recchar[0] != 'P')
 						error_flag = 1;
 					junk_count++;
 				break;
 				case 3://D
-					recchar = UCA0RXBUF;
-					if (recchar != 'D')
+					recchar[0] = UCA0RXBUF;
+					if (recchar[0] != 'D')
 						error_flag = 1;
 					junk_count++;
 				break;
 				case 4://,
-					recchar = UCA0RXBUF;
-					if (recchar != ',')
+					recchar[0] = UCA0RXBUF;
+					if (recchar[0] != ',')
 						error_flag = 1;
 					junk_count++;
 				break;
 				case 5://[connection_ID]
-					recchar = UCA0RXBUF;
-					connection_ID = atoi(&recchar);
+					recchar[0] = UCA0RXBUF;
+					connection_ID = atoi(recchar);
 					junk_count++;
 				break;
 				case 6://,
-					recchar = UCA0RXBUF;
-					if (recchar != ',')
+					recchar[0] = UCA0RXBUF;
+					if (recchar[0] != ',')
 						error_flag = 1;
 					junk_count++;
 				break;
 				case 7://message length
-					recchar = UCA0RXBUF;
-					receive_length = atoi(&recchar);
+					recchar[0] = UCA0RXBUF;
+					receive_length = atoi(recchar);
 					junk_count++;
 				break;
 				case 8://:
-					recchar = UCA0RXBUF;
-					if (recchar != ':')
+					recchar[0] = UCA0RXBUF;
+					if (recchar[0] != ':')
 						error_flag = 1;
 					junk_count++;
+				break;
 				default://actually get message here
-					recchar = UCA0RXBUF;
-					if((msgindex < receive_length) && (msgindex < 255)&&(recchar != '\n')&&(recchar != '\r')) {
-						// if (recchar == '1')
+					recchar[0] = UCA0RXBUF;
+					if((msgindex < (receive_length+1)) && (msgindex < 255)&&(recchar[0] != '\n')&&(recchar[0] != '\r')) {
+						// if (recchar[0] == '1')
 						// {
 						// 	P1OUT ^= 0x1;
 						// }
-						rxbuff[msgindex] = recchar;
+						rxbuff[msgindex] = recchar[0];
 						msgindex++;
 					}
 					else {	// designated length hit
@@ -441,11 +461,19 @@ __interrupt void USCI0RX_ISR(void) {
 				{
 					rx_expression = 1;
 					expression_response_count = EXPRESSION_RESPONSE_DURATION;
+					sendchar('1');
 				}
 				else if (rxbuff[0] == '2')
 				{
 					rx_expression = 2;
 					expression_response_count = EXPRESSION_RESPONSE_DURATION;
+					sendchar('2');
+				}
+				else if (rxbuff[0] == '0')
+				{
+					rx_expression = 0;
+					expression_response_count = EXPRESSION_RESPONSE_DURATION;
+					sendchar('0');
 				}
 			}
 
@@ -462,6 +490,22 @@ __interrupt void USCI0RX_ISR(void) {
 	}
 
 }
+
+#pragma vector=PORT2_VECTOR
+__interrupt void Port_2(void)
+{
+	if (P2IFG & BUTTON_PIN)
+	{
+		P2IFG &= ~BUTTON_PIN;                           // P2.5 IFG cleared
+		P2IE &= ~BUTTON_PIN;                             // P1.4 interrupt disabled until renabled
+		rx_expression = (rx_expression+1)%3;
+	}
+	else//this case should never be triggered, but we'll clear all flags in this case
+	{
+		P2IFG == 0;
+	}
+}
+
 
 //Repackages the motor intensities into the SPI buffer
 void updateTLC_array() {
@@ -533,7 +577,7 @@ void happy()
 void suprised()
 {
 	int i;
-	if ((expression_response_count % 2) == 0)
+	if ((expression_response_count % 20) < 10)
 	{
 		for (i = 0; i < NUMBER_OF_MOTORS; i++)
 		{
