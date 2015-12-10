@@ -43,3 +43,10 @@ OK
 
 +IPD,0,1:1
 +IPD,0,2:
+
+
+
+
+
+AT+CIPMUX=1
+AT+CIPSERVER=1

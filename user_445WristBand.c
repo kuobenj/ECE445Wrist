@@ -24,6 +24,8 @@ University of Illinois at Urbana-Champaign
 
 #define BUTTON_PIN 0x02
 
+#define FUDGE_FACTOR 5000
+
 char newprint = 0;
 unsigned long timecnt = 0;//keeps track of milliseconds
 // unsigned long pwm_timecnt = 0;//keeps track of each cylce of PWM
@@ -45,7 +47,7 @@ char connection_ID;//connection ID of the module
 char junk_count;//the JUNK values of IPD count before recieving data
 volatile char error_flag = 0;//error in UART transmission
 
-char rx_expression = 1;//this variable is to keep track of the expression recieved
+char rx_expression = 2;//this variable is to keep track of the expression recieved
 //0 - neutral
 //1 - happy
 //2 - suprised
@@ -214,17 +216,17 @@ void main(void) {
 			}
 			// UART_printf("AT+CIPMUX=1\r\nAT+CIPSERVER=1\r\n");
 			//jank work around because printf wasn't working with the longer strings
-			if((timecnt>=2500)&&(timecnt<3000)){
-				if(init_flag == 0){
+			if((timecnt>=(2500+FUDGE_FACTOR))&&(timecnt<(3000+FUDGE_FACTOR))){
+				 if(init_flag == 0){
 				 UART_printf("AT+CIPMUX=1\r\n");
-				 init_flag++;
-				}
+				  init_flag++;
+				 }
 			}
-			if((timecnt>=3000)&&(timecnt<3500)){
-				if(init_flag == 1){
+			if((timecnt>=(3000+FUDGE_FACTOR))&&(timecnt<(3500+FUDGE_FACTOR))){
+				 if(init_flag == 1){
 				 UART_printf("AT+CIPSERVER=1\r\n");
-				 init_flag--;
-				}
+				  init_flag--;
+				 }
 			}
 			if((timecnt > 4000) && (((timecnt+50)%100) == 0))
 			{
@@ -245,6 +247,7 @@ void main(void) {
 				if (expression_response_count < 0)
 				{
 					rx_expression = 0;
+//					expression_response_count = EXPRESSION_RESPONSE_DURATION;
 				}
 //				 int i;
 //				 int temp = motors[0];
@@ -378,7 +381,7 @@ __interrupt void USCI0RX_ISR(void) {
 		//interrupts when recieved UART
 		//pareses incoming strings +IPD,X,X:MESSAGE_HERE
 		recchar[0] = UCA0RXBUF;// acquire character
-		sendchar(recchar[0]);
+//		sendchar(recchar[0]);
 		if(!started) {	// Haven't started a message yet
 			if(recchar[0] == '+') {//incoming message starts with a +
 				started = 1;
@@ -498,7 +501,9 @@ __interrupt void Port_2(void)
 	{
 		P2IFG &= ~BUTTON_PIN;                           // P2.5 IFG cleared
 		P2IE &= ~BUTTON_PIN;                             // P1.4 interrupt disabled until renabled
-		rx_expression = (rx_expression+1)%3;
+		// rx_expression = (rx_expression+1)%3;
+		P2OUT ^= WIFI_EN; //toggle wifi enable
+		timecnt = 0; // restart wifi
 	}
 	else//this case should never be triggered, but we'll clear all flags in this case
 	{
