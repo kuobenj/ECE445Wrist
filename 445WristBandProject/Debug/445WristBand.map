@@ -1,10 +1,10 @@
 ******************************************************************************
                   MSP430 Linker PC v4.4.5                      
 ******************************************************************************
->> Linked Tue Nov 10 18:21:50 2015
+>> Linked Mon Nov 30 21:55:49 2015
 
 OUTPUT FILE NAME:   <445WristBand.out>
-ENTRY POINT SYMBOL: "_c_int00_noargs_noexit"  address: 0000d07c
+ENTRY POINT SYMBOL: "_c_int00_noargs_noexit"  address: 0000d05e
 
 
 MEMORY CONFIGURATION
@@ -19,7 +19,7 @@ MEMORY CONFIGURATION
   INFOC                 00001040   00000040  00000000  00000040  RWIX
   INFOB                 00001080   00000040  00000000  00000040  RWIX
   INFOA                 000010c0   00000040  00000000  00000040  RWIX
-  FLASH                 0000c000   00003fe0  00001348  00002c98  RWIX
+  FLASH                 0000c000   00003fe0  0000132a  00002cb6  RWIX
   INT00                 0000ffe0   00000002  00000000  00000002  RWIX
   INT01                 0000ffe2   00000002  00000000  00000002  RWIX
   INT02                 0000ffe4   00000002  00000002  00000000  RWIX
@@ -53,69 +53,69 @@ section   page    origin      length       input sections
                   000003b0    00000002     rts430.lib : boot.obj (.stack)
                   000003b2    0000004e     --HOLE--
 
-.text      0    0000c000    00001194     
-                  0000c000    000001f6     user_445WristBand.obj (.text:USCI0RX_ISR)
-                  0000c1f6    000001f0     user_445WristBand.obj (.text:main)
-                  0000c3e6    00000130     rts430.lib : fs_add.obj (.text)
-                  0000c516    00000120     UARTfuncs.obj (.text:Init_UART)
-                  0000c636    00000116     rts430.lib : _printfi_min.obj (.text:_setfield)
-                  0000c74c    000000ca                : _printfi_min.obj (.text:__TI_printfi_minimal)
-                  0000c816    000000c2                : fs_mpy.obj (.text)
-                  0000c8d8    000000a6     user_445WristBand.obj (.text:USCI0TX_ISR)
-                  0000c97e    0000009a     rts430.lib : fs_div.obj (.text)
-                  0000ca18    0000006c     user_445WristBand.obj (.text:happy)
-                  0000ca84    00000068     rts430.lib : fs_toi.obj (.text)
-                  0000caec    00000062     user_445WristBand.obj (.text:Timer_A)
-                  0000cb4e    00000060     user_445WristBand.obj (.text:updateTLC_array)
-                  0000cbae    00000058     rts430.lib : div32u.obj (.text)
-                  0000cc06    00000056                : _printfi_min.obj (.text:_ltostr)
-                  0000cc5c    00000052                : atoi.obj (.text:atoi)
-                  0000ccae    0000004e                : _printfi_min.obj (.text:_pproc_diouxp)
-                  0000ccfc    0000004c                : lsr16.obj (.text)
-                  0000cd48    0000004a                : fs_cmp.obj (.text)
-                  0000cd92    00000048                : autoinit.obj (.text:_auto_init)
-                  0000cdda    00000048                : _printfi_min.obj (.text:_pproc_str)
-                  0000ce22    00000048     user_445WristBand.obj (.text:suprised)
-                  0000ce6a    0000003c     user_445WristBand.obj (.text:Port_2)
-                  0000cea6    00000036     rts430.lib : fs_itof.obj (.text)
-                  0000cedc    00000034                : vsprintf.obj (.text:vsprintf)
-                  0000cf10    00000032                : fs_ultof.obj (.text)
-                  0000cf42    0000002e                : _printfi_min.obj (.text:_getarg_diouxp)
-                  0000cf70    0000002e     UARTfuncs.obj (.text:sendchars)
-                  0000cf9e    0000002c     rts430.lib : asr16.obj (.text)
-                  0000cfca    0000002c                : div16s.obj (.text)
-                  0000cff6    0000002c                : lsl16.obj (.text)
-                  0000d022    00000022     user_445WristBand.obj (.text:Timer_1)
-                  0000d044    0000001e     user_445WristBand.obj (.text:neutral)
-                  0000d062    0000001a     UARTfuncs.obj (.text:UART_printf)
-                  0000d07c    0000001a     rts430.lib : boot_special.obj (.text:_c_int00_noargs_noexit)
-                  0000d096    0000001a                : vsprintf.obj (.text:_outs)
-                  0000d0b0    0000001a                : memccpy.obj (.text:memccpy)
-                  0000d0ca    00000018                : _printfi_min.obj (.text:_div)
-                  0000d0e2    00000016                : div16u.obj (.text)
-                  0000d0f8    00000016     UARTfuncs.obj (.text:sendchar)
-                  0000d10e    00000014     rts430.lib : memset.obj (.text:memset)
-                  0000d122    00000014                : mult16.obj (.text)
-                  0000d136    00000012                : vsprintf.obj (.text:_outc)
-                  0000d148    00000012                : memcpy.obj (.text:memcpy)
-                  0000d15a    00000010                : epilog.obj (.text)
-                  0000d16a    0000000e     user_445WristBand.obj (.text:sendTLC_array)
-                  0000d178    0000000e     rts430.lib : strlen.obj (.text:strlen)
-                  0000d186    00000006                : isr_trap.obj (.text:_isr:__TI_ISR_TRAP)
-                  0000d18c    00000004                : pre_init.obj (.text:_system_pre_init)
-                  0000d190    00000004                : exit.obj (.text:abort)
+.text      0    0000c000    00001176     
+                  0000c000    000001f0     user_445WristBand.obj (.text:main)
+                  0000c1f0    000001ee     user_445WristBand.obj (.text:USCI0RX_ISR)
+                  0000c3de    00000130     rts430.lib : fs_add.obj (.text)
+                  0000c50e    00000120     UARTfuncs.obj (.text:Init_UART)
+                  0000c62e    00000116     rts430.lib : _printfi_min.obj (.text:_setfield)
+                  0000c744    000000ca                : _printfi_min.obj (.text:__TI_printfi_minimal)
+                  0000c80e    000000c2                : fs_mpy.obj (.text)
+                  0000c8d0    000000a6     user_445WristBand.obj (.text:USCI0TX_ISR)
+                  0000c976    0000009a     rts430.lib : fs_div.obj (.text)
+                  0000ca10    0000006c     user_445WristBand.obj (.text:happy)
+                  0000ca7c    00000068     rts430.lib : fs_toi.obj (.text)
+                  0000cae4    00000062     user_445WristBand.obj (.text:Timer_A)
+                  0000cb46    00000060     user_445WristBand.obj (.text:updateTLC_array)
+                  0000cba6    00000058     rts430.lib : div32u.obj (.text)
+                  0000cbfe    00000056                : _printfi_min.obj (.text:_ltostr)
+                  0000cc54    00000052                : atoi.obj (.text:atoi)
+                  0000cca6    0000004e                : _printfi_min.obj (.text:_pproc_diouxp)
+                  0000ccf4    0000004c                : lsr16.obj (.text)
+                  0000cd40    0000004a                : fs_cmp.obj (.text)
+                  0000cd8a    00000048                : autoinit.obj (.text:_auto_init)
+                  0000cdd2    00000048                : _printfi_min.obj (.text:_pproc_str)
+                  0000ce1a    00000048     user_445WristBand.obj (.text:suprised)
+                  0000ce62    00000036     rts430.lib : fs_itof.obj (.text)
+                  0000ce98    00000034                : vsprintf.obj (.text:vsprintf)
+                  0000cecc    00000032                : fs_ultof.obj (.text)
+                  0000cefe    0000002e                : _printfi_min.obj (.text:_getarg_diouxp)
+                  0000cf2c    0000002e     UARTfuncs.obj (.text:sendchars)
+                  0000cf5a    0000002c     rts430.lib : asr16.obj (.text)
+                  0000cf86    0000002c                : div16s.obj (.text)
+                  0000cfb2    0000002c                : lsl16.obj (.text)
+                  0000cfde    00000026     user_445WristBand.obj (.text:Port_2)
+                  0000d004    00000022     user_445WristBand.obj (.text:Timer_1)
+                  0000d026    0000001e     user_445WristBand.obj (.text:neutral)
+                  0000d044    0000001a     UARTfuncs.obj (.text:UART_printf)
+                  0000d05e    0000001a     rts430.lib : boot_special.obj (.text:_c_int00_noargs_noexit)
+                  0000d078    0000001a                : vsprintf.obj (.text:_outs)
+                  0000d092    0000001a                : memccpy.obj (.text:memccpy)
+                  0000d0ac    00000018                : _printfi_min.obj (.text:_div)
+                  0000d0c4    00000016                : div16u.obj (.text)
+                  0000d0da    00000016     UARTfuncs.obj (.text:sendchar)
+                  0000d0f0    00000014     rts430.lib : memset.obj (.text:memset)
+                  0000d104    00000014                : mult16.obj (.text)
+                  0000d118    00000012                : vsprintf.obj (.text:_outc)
+                  0000d12a    00000012                : memcpy.obj (.text:memcpy)
+                  0000d13c    00000010                : epilog.obj (.text)
+                  0000d14c    0000000e     user_445WristBand.obj (.text:sendTLC_array)
+                  0000d15a    0000000e     rts430.lib : strlen.obj (.text:strlen)
+                  0000d168    00000006                : isr_trap.obj (.text:_isr:__TI_ISR_TRAP)
+                  0000d16e    00000004                : pre_init.obj (.text:_system_pre_init)
+                  0000d172    00000004                : exit.obj (.text:abort)
 
-.const     0    0000d194    00000136     
-                  0000d194    00000101     rts430.lib : ctype.obj (.const:.string:_ctypes_)
-                  0000d295    00000001     --HOLE-- [fill = 0]
-                  0000d296    00000020     user_445WristBand.obj (.const:.string)
-                  0000d2b6    00000014     rts430.lib : _printfi_min.obj (.const:.string)
+.const     0    0000d176    00000136     
+                  0000d176    00000101     rts430.lib : ctype.obj (.const:.string:_ctypes_)
+                  0000d277    00000001     --HOLE-- [fill = 0]
+                  0000d278    00000020     user_445WristBand.obj (.const:.string)
+                  0000d298    00000014     rts430.lib : _printfi_min.obj (.const:.string)
 
-.cinit     0    0000d2ca    0000007e     
-                  0000d2ca    00000058     user_445WristBand.obj (.cinit)
-                  0000d322    00000023     UARTfuncs.obj (.cinit)
-                  0000d345    00000001     --HOLE-- [fill = 0]
-                  0000d346    00000002     (.pad.cinit) [fill = 0]
+.cinit     0    0000d2ac    0000007e     
+                  0000d2ac    00000058     user_445WristBand.obj (.cinit)
+                  0000d304    00000023     UARTfuncs.obj (.cinit)
+                  0000d327    00000001     --HOLE-- [fill = 0]
+                  0000d328    00000002     (.pad.cinit) [fill = 0]
 
 .pinit     0    0000c000    00000000     UNINITIALIZED
 
@@ -183,7 +183,7 @@ address   name
 00000057  BCSCTL1                  
 00000058  BCSCTL2                  
 00000053  BCSCTL3                  
-0000d190  C$$EXIT                  
+0000d172  C$$EXIT                  
 00000059  CACTL1                   
 0000005a  CACTL2                   
 000010fb  CALBC1_12MHZ             
@@ -203,55 +203,55 @@ address   name
 00000001  IE2                      
 00000002  IFG1                     
 00000003  IFG2                     
-0000cf9e  I_ASR                    
-0000cfc6  I_ASR_1                  
-0000cfb4  I_ASR_10                 
-0000cfb2  I_ASR_11                 
-0000cfb0  I_ASR_12                 
-0000cfae  I_ASR_13                 
-0000cfac  I_ASR_14                 
-0000cfaa  I_ASR_15                 
-0000cfc4  I_ASR_2                  
-0000cfc2  I_ASR_3                  
-0000cfc0  I_ASR_4                  
-0000cfbe  I_ASR_5                  
-0000cfbc  I_ASR_6                  
-0000cfba  I_ASR_7                  
-0000cfb8  I_ASR_8                  
-0000cfb6  I_ASR_9                  
-0000cff6  I_LSL                    
-0000d01e  I_LSL_1                  
-0000d00c  I_LSL_10                 
-0000d00a  I_LSL_11                 
-0000d008  I_LSL_12                 
-0000d006  I_LSL_13                 
-0000d004  I_LSL_14                 
-0000d002  I_LSL_15                 
-0000d01c  I_LSL_2                  
-0000d01a  I_LSL_3                  
-0000d018  I_LSL_4                  
-0000d016  I_LSL_5                  
-0000d014  I_LSL_6                  
-0000d012  I_LSL_7                  
-0000d010  I_LSL_8                  
-0000d00e  I_LSL_9                  
-0000ccfc  I_LSR                    
-0000cd42  I_LSR_1                  
-0000cd1e  I_LSR_10                 
-0000cd1a  I_LSR_11                 
-0000cd16  I_LSR_12                 
-0000cd12  I_LSR_13                 
-0000cd0e  I_LSR_14                 
-0000cd0a  I_LSR_15                 
-0000cd3e  I_LSR_2                  
-0000cd3a  I_LSR_3                  
-0000cd36  I_LSR_4                  
-0000cd32  I_LSR_5                  
-0000cd2e  I_LSR_6                  
-0000cd2a  I_LSR_7                  
-0000cd26  I_LSR_8                  
-0000cd22  I_LSR_9                  
-0000c516  Init_UART                
+0000cf5a  I_ASR                    
+0000cf82  I_ASR_1                  
+0000cf70  I_ASR_10                 
+0000cf6e  I_ASR_11                 
+0000cf6c  I_ASR_12                 
+0000cf6a  I_ASR_13                 
+0000cf68  I_ASR_14                 
+0000cf66  I_ASR_15                 
+0000cf80  I_ASR_2                  
+0000cf7e  I_ASR_3                  
+0000cf7c  I_ASR_4                  
+0000cf7a  I_ASR_5                  
+0000cf78  I_ASR_6                  
+0000cf76  I_ASR_7                  
+0000cf74  I_ASR_8                  
+0000cf72  I_ASR_9                  
+0000cfb2  I_LSL                    
+0000cfda  I_LSL_1                  
+0000cfc8  I_LSL_10                 
+0000cfc6  I_LSL_11                 
+0000cfc4  I_LSL_12                 
+0000cfc2  I_LSL_13                 
+0000cfc0  I_LSL_14                 
+0000cfbe  I_LSL_15                 
+0000cfd8  I_LSL_2                  
+0000cfd6  I_LSL_3                  
+0000cfd4  I_LSL_4                  
+0000cfd2  I_LSL_5                  
+0000cfd0  I_LSL_6                  
+0000cfce  I_LSL_7                  
+0000cfcc  I_LSL_8                  
+0000cfca  I_LSL_9                  
+0000ccf4  I_LSR                    
+0000cd3a  I_LSR_1                  
+0000cd16  I_LSR_10                 
+0000cd12  I_LSR_11                 
+0000cd0e  I_LSR_12                 
+0000cd0a  I_LSR_13                 
+0000cd06  I_LSR_14                 
+0000cd02  I_LSR_15                 
+0000cd36  I_LSR_2                  
+0000cd32  I_LSR_3                  
+0000cd2e  I_LSR_4                  
+0000cd2a  I_LSR_5                  
+0000cd26  I_LSR_6                  
+0000cd22  I_LSR_7                  
+0000cd1e  I_LSR_8                  
+0000cd1a  I_LSR_9                  
+0000c50e  Init_UART                
 00000022  P1DIR                    
 00000025  P1IE                     
 00000024  P1IES                    
@@ -276,7 +276,7 @@ address   name
 00000010  P3REN                    
 0000001b  P3SEL                    
 00000043  P3SEL2                   
-0000ce6a  Port_2                   
+0000cfde  Port_2                   
 00000172  TA0CCR0                  
 00000174  TA0CCR1                  
 00000176  TA0CCR2                  
@@ -300,10 +300,10 @@ address   name
 000010c0  TLV_CHECKSUM             
 000010f7  TLV_DCO_30_LEN           
 000010f6  TLV_DCO_30_TAG           
-0000d022  Timer_1                  
-0000caec  Timer_A                  
+0000d004  Timer_1                  
+0000cae4  Timer_A                  
 00000287  UART_flag                
-0000d062  UART_printf              
+0000d044  UART_printf              
 0000005d  UCA0ABCTL                
 00000062  UCA0BR0                  
 00000063  UCA0BR1                  
@@ -325,12 +325,12 @@ address   name
 0000006e  UCB0RXBUF                
 0000006d  UCB0STAT                 
 0000006f  UCB0TXBUF                
-0000c000  USCI0RX_ISR              
-0000c8d8  USCI0TX_ISR              
+0000c1f0  USCI0RX_ISR              
+0000c8d0  USCI0TX_ISR              
 00000120  WDTCTL                   
 00000400  __STACK_END              
 00000050  __STACK_SIZE             
-0000d186  __TI_ISR_TRAP            
+0000d168  __TI_ISR_TRAP            
 0000ffe4  __TI_int02               
 0000ffe6  __TI_int03               
 0000ffea  __TI_int05               
@@ -343,43 +343,43 @@ address   name
 0000fff8  __TI_int12               
 0000fffa  __TI_int13               
 0000fffc  __TI_int14               
-0000c74c  __TI_printfi_minimal     
+0000c744  __TI_printfi_minimal     
 ffffffff  __binit__                
 00000200  __bss__                  
 ffffffff  __c_args__               
-0000d2ca  __cinit__                
+0000d2ac  __cinit__                
 00000200  __data__                 
-0000cfca  __divi                   
-0000d0e2  __divu                   
-0000cbae  __divul                  
+0000cf86  __divi                   
+0000d0c4  __divu                   
+0000cba6  __divul                  
 00000200  __edata__                
 000002e0  __end__                  
-0000d194  __etext__                
-0000c3ec  __fs_add                 
-0000cd48  __fs_cmp                 
-0000c97e  __fs_div                 
-0000cea6  __fs_itof                
-0000c816  __fs_mpy                 
-0000c3e6  __fs_sub                 
-0000ca84  __fs_toi                 
-0000cf10  __fs_ultof               
-0000d122  __mpyi                   
-0000d122  __mpyi_sw                
+0000d176  __etext__                
+0000c3e4  __fs_add                 
+0000cd40  __fs_cmp                 
+0000c976  __fs_div                 
+0000ce62  __fs_itof                
+0000c80e  __fs_mpy                 
+0000c3de  __fs_sub                 
+0000ca7c  __fs_toi                 
+0000cecc  __fs_ultof               
+0000d104  __mpyi                   
+0000d104  __mpyi_sw                
 ffffffff  __pinit__                
-0000cfca  __remi                   
-0000d0e2  __remu                   
-0000cbae  __remul                  
+0000cf86  __remi                   
+0000d0c4  __remu                   
+0000cba6  __remul                  
 0000c000  __text__                 
-0000cd92  _auto_init               
-0000d07c  _c_int00_noargs_noexit   
-0000d194  _ctypes_                 
+0000cd8a  _auto_init               
+0000d05e  _c_int00_noargs_noexit   
+0000d176  _ctypes_                 
 0000fffe  _reset_vector            
 000003b0  _stack                   
-0000d18c  _system_pre_init         
-0000d190  abort                    
-0000cc5c  atoi                     
+0000d16e  _system_pre_init         
+0000d172  abort                    
+0000cc54  atoi                     
 ffffffff  binit                    
-0000d2ca  cinit                    
+0000d2ac  cinit                    
 000002d3  connection_ID            
 00000284  currentindex             
 000002b2  debug_count              
@@ -387,24 +387,24 @@ ffffffff  binit
 00000200  edata                    
 000002e0  end                      
 000002d5  error_flag               
-0000d194  etext                    
+0000d176  etext                    
 000002d8  expression_response_count
-0000d166  func_epilog_1            
-0000d164  func_epilog_2            
-0000d162  func_epilog_3            
-0000d160  func_epilog_4            
-0000d15e  func_epilog_5            
-0000d15c  func_epilog_6            
-0000d15a  func_epilog_7            
-0000ca18  happy                    
+0000d148  func_epilog_1            
+0000d146  func_epilog_2            
+0000d144  func_epilog_3            
+0000d142  func_epilog_4            
+0000d140  func_epilog_5            
+0000d13e  func_epilog_6            
+0000d13c  func_epilog_7            
+0000ca10  happy                    
 000002d4  junk_count               
-0000c1f6  main                     
-0000d0b0  memccpy                  
-0000d148  memcpy                   
-0000d10e  memset                   
+0000c000  main                     
+0000d092  memccpy                  
+0000d12a  memcpy                   
+0000d0f0  memset                   
 00000292  motors                   
 00000288  msgindex                 
-0000d044  neutral                  
+0000d026  neutral                  
 0000028b  newmsg                   
 0000028c  newprint                 
 ffffffff  pinit                    
@@ -416,21 +416,21 @@ ffffffff  pinit
 000002d6  rx_expression            
 000002d1  rx_started               
 00000234  rxbuff                   
-0000d16a  sendTLC_array            
-0000d0f8  sendchar                 
-0000cf70  sendchars                
+0000d14c  sendTLC_array            
+0000d0da  sendchar                 
+0000cf2c  sendchars                
 00000285  senddone                 
 000002b4  spi_index                
 000002b6  spi_sout_buff            
 0000028a  started                  
-0000d178  strlen                   
-0000ce22  suprised                 
+0000d15a  strlen                   
+0000ce1a  suprised                 
 0000028e  timecnt                  
 00000200  txbuff                   
 00000283  txcount                  
 00000289  txindex                  
-0000cb4e  updateTLC_array          
-0000cedc  vsprintf                 
+0000cb46  updateTLC_array          
+0000ce98  vsprintf                 
 
 
 GLOBAL SYMBOLS: SORTED BY Symbol Address 
@@ -575,111 +575,111 @@ address   name
 000010fe  CALDCO_1MHZ              
 000010ff  CALBC1_1MHZ              
 0000c000  .text                    
-0000c000  USCI0RX_ISR              
 0000c000  __text__                 
-0000c1f6  main                     
-0000c3e6  __fs_sub                 
-0000c3ec  __fs_add                 
-0000c516  Init_UART                
-0000c74c  __TI_printfi_minimal     
-0000c816  __fs_mpy                 
-0000c8d8  USCI0TX_ISR              
-0000c97e  __fs_div                 
-0000ca18  happy                    
-0000ca84  __fs_toi                 
-0000caec  Timer_A                  
-0000cb4e  updateTLC_array          
-0000cbae  __divul                  
-0000cbae  __remul                  
-0000cc5c  atoi                     
-0000ccfc  I_LSR                    
-0000cd0a  I_LSR_15                 
-0000cd0e  I_LSR_14                 
-0000cd12  I_LSR_13                 
-0000cd16  I_LSR_12                 
-0000cd1a  I_LSR_11                 
-0000cd1e  I_LSR_10                 
-0000cd22  I_LSR_9                  
-0000cd26  I_LSR_8                  
-0000cd2a  I_LSR_7                  
-0000cd2e  I_LSR_6                  
-0000cd32  I_LSR_5                  
-0000cd36  I_LSR_4                  
-0000cd3a  I_LSR_3                  
-0000cd3e  I_LSR_2                  
-0000cd42  I_LSR_1                  
-0000cd48  __fs_cmp                 
-0000cd92  _auto_init               
-0000ce22  suprised                 
-0000ce6a  Port_2                   
-0000cea6  __fs_itof                
-0000cedc  vsprintf                 
-0000cf10  __fs_ultof               
-0000cf70  sendchars                
-0000cf9e  I_ASR                    
-0000cfaa  I_ASR_15                 
-0000cfac  I_ASR_14                 
-0000cfae  I_ASR_13                 
-0000cfb0  I_ASR_12                 
-0000cfb2  I_ASR_11                 
-0000cfb4  I_ASR_10                 
-0000cfb6  I_ASR_9                  
-0000cfb8  I_ASR_8                  
-0000cfba  I_ASR_7                  
-0000cfbc  I_ASR_6                  
-0000cfbe  I_ASR_5                  
-0000cfc0  I_ASR_4                  
-0000cfc2  I_ASR_3                  
-0000cfc4  I_ASR_2                  
-0000cfc6  I_ASR_1                  
-0000cfca  __divi                   
-0000cfca  __remi                   
-0000cff6  I_LSL                    
-0000d002  I_LSL_15                 
-0000d004  I_LSL_14                 
-0000d006  I_LSL_13                 
-0000d008  I_LSL_12                 
-0000d00a  I_LSL_11                 
-0000d00c  I_LSL_10                 
-0000d00e  I_LSL_9                  
-0000d010  I_LSL_8                  
-0000d012  I_LSL_7                  
-0000d014  I_LSL_6                  
-0000d016  I_LSL_5                  
-0000d018  I_LSL_4                  
-0000d01a  I_LSL_3                  
-0000d01c  I_LSL_2                  
-0000d01e  I_LSL_1                  
-0000d022  Timer_1                  
-0000d044  neutral                  
-0000d062  UART_printf              
-0000d07c  _c_int00_noargs_noexit   
-0000d0b0  memccpy                  
-0000d0e2  __divu                   
-0000d0e2  __remu                   
-0000d0f8  sendchar                 
-0000d10e  memset                   
-0000d122  __mpyi                   
-0000d122  __mpyi_sw                
-0000d148  memcpy                   
-0000d15a  func_epilog_7            
-0000d15c  func_epilog_6            
-0000d15e  func_epilog_5            
-0000d160  func_epilog_4            
-0000d162  func_epilog_3            
-0000d164  func_epilog_2            
-0000d166  func_epilog_1            
-0000d16a  sendTLC_array            
-0000d178  strlen                   
-0000d186  __TI_ISR_TRAP            
-0000d18c  _system_pre_init         
-0000d190  C$$EXIT                  
-0000d190  abort                    
-0000d194  __etext__                
-0000d194  _ctypes_                 
-0000d194  etext                    
-0000d2ca  __cinit__                
-0000d2ca  cinit                    
+0000c000  main                     
+0000c1f0  USCI0RX_ISR              
+0000c3de  __fs_sub                 
+0000c3e4  __fs_add                 
+0000c50e  Init_UART                
+0000c744  __TI_printfi_minimal     
+0000c80e  __fs_mpy                 
+0000c8d0  USCI0TX_ISR              
+0000c976  __fs_div                 
+0000ca10  happy                    
+0000ca7c  __fs_toi                 
+0000cae4  Timer_A                  
+0000cb46  updateTLC_array          
+0000cba6  __divul                  
+0000cba6  __remul                  
+0000cc54  atoi                     
+0000ccf4  I_LSR                    
+0000cd02  I_LSR_15                 
+0000cd06  I_LSR_14                 
+0000cd0a  I_LSR_13                 
+0000cd0e  I_LSR_12                 
+0000cd12  I_LSR_11                 
+0000cd16  I_LSR_10                 
+0000cd1a  I_LSR_9                  
+0000cd1e  I_LSR_8                  
+0000cd22  I_LSR_7                  
+0000cd26  I_LSR_6                  
+0000cd2a  I_LSR_5                  
+0000cd2e  I_LSR_4                  
+0000cd32  I_LSR_3                  
+0000cd36  I_LSR_2                  
+0000cd3a  I_LSR_1                  
+0000cd40  __fs_cmp                 
+0000cd8a  _auto_init               
+0000ce1a  suprised                 
+0000ce62  __fs_itof                
+0000ce98  vsprintf                 
+0000cecc  __fs_ultof               
+0000cf2c  sendchars                
+0000cf5a  I_ASR                    
+0000cf66  I_ASR_15                 
+0000cf68  I_ASR_14                 
+0000cf6a  I_ASR_13                 
+0000cf6c  I_ASR_12                 
+0000cf6e  I_ASR_11                 
+0000cf70  I_ASR_10                 
+0000cf72  I_ASR_9                  
+0000cf74  I_ASR_8                  
+0000cf76  I_ASR_7                  
+0000cf78  I_ASR_6                  
+0000cf7a  I_ASR_5                  
+0000cf7c  I_ASR_4                  
+0000cf7e  I_ASR_3                  
+0000cf80  I_ASR_2                  
+0000cf82  I_ASR_1                  
+0000cf86  __divi                   
+0000cf86  __remi                   
+0000cfb2  I_LSL                    
+0000cfbe  I_LSL_15                 
+0000cfc0  I_LSL_14                 
+0000cfc2  I_LSL_13                 
+0000cfc4  I_LSL_12                 
+0000cfc6  I_LSL_11                 
+0000cfc8  I_LSL_10                 
+0000cfca  I_LSL_9                  
+0000cfcc  I_LSL_8                  
+0000cfce  I_LSL_7                  
+0000cfd0  I_LSL_6                  
+0000cfd2  I_LSL_5                  
+0000cfd4  I_LSL_4                  
+0000cfd6  I_LSL_3                  
+0000cfd8  I_LSL_2                  
+0000cfda  I_LSL_1                  
+0000cfde  Port_2                   
+0000d004  Timer_1                  
+0000d026  neutral                  
+0000d044  UART_printf              
+0000d05e  _c_int00_noargs_noexit   
+0000d092  memccpy                  
+0000d0c4  __divu                   
+0000d0c4  __remu                   
+0000d0da  sendchar                 
+0000d0f0  memset                   
+0000d104  __mpyi                   
+0000d104  __mpyi_sw                
+0000d12a  memcpy                   
+0000d13c  func_epilog_7            
+0000d13e  func_epilog_6            
+0000d140  func_epilog_5            
+0000d142  func_epilog_4            
+0000d144  func_epilog_3            
+0000d146  func_epilog_2            
+0000d148  func_epilog_1            
+0000d14c  sendTLC_array            
+0000d15a  strlen                   
+0000d168  __TI_ISR_TRAP            
+0000d16e  _system_pre_init         
+0000d172  C$$EXIT                  
+0000d172  abort                    
+0000d176  __etext__                
+0000d176  _ctypes_                 
+0000d176  etext                    
+0000d2ac  __cinit__                
+0000d2ac  cinit                    
 0000ffe4  __TI_int02               
 0000ffe6  __TI_int03               
 0000ffea  __TI_int05               
